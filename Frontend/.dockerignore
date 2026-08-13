@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+dist
+.env
+*.md
+.git
+.gitignore
+.vscode
+docker-compose*.yml
+*:Zone.Identifier

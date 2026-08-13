@@ -1,0 +1,26 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# Node/OS/.idea ignores are handled by the repo-root .gitignore.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# IDEs and editors
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# Visual Studio Code
+.vscode/
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/typings

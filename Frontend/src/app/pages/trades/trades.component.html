@@ -1,0 +1,83 @@
+<div class="page form-page">
+  <h1>{{ isEdit ? 'Edit Trade' : 'New Trade' }}</h1>
+
+  <form (ngSubmit)="onSubmit()">
+    <div class="field">
+      <label for="pair">Pair</label>
+      <select id="pair" [(ngModel)]="form.pairId" name="pairId" required>
+        <option [ngValue]="null" disabled>Select a pair</option>
+        <option *ngFor="let p of pairs" [ngValue]="p.id">{{ p.pair }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="direction">Direction</label>
+      <select id="direction" [(ngModel)]="form.direction" name="direction">
+        <option value="long">Long</option>
+        <option value="short">Short</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="result">Result</label>
+      <select id="result" [(ngModel)]="form.result" name="result" (ngModelChange)="onResultChange()">
+        <option value="W">Win</option>
+        <option value="BE">Break Even</option>
+        <option value="L">Loss</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="entry">Entry</label>
+      <input id="entry" type="number" [(ngModel)]="form.entry" name="entry" step="0.0001" required />
+    </div>
+    <div class="field">
+      <label for="tp">Take Profit</label>
+      <input id="tp" type="number" [(ngModel)]="form.tp" name="tp" step="0.0001" required />
+    </div>
+    <div class="field">
+      <label for="sl">Stop Loss</label>
+      <input id="sl" type="number" [(ngModel)]="form.sl" name="sl" step="0.0001" required />
+    </div>
+    <div class="field">
+      <label for="risk">Risk</label>
+      <input id="risk" type="number" [(ngModel)]="form.risk" name="risk" step="0.01" required (ngModelChange)="onRiskChange()" />
+    </div>
+    <div class="field">
+      <label for="fee">Fee</label>
+      <input id="fee" type="number" [(ngModel)]="form.fee" name="fee" step="0.01" />
+    </div>
+    <div class="field">
+      <label for="profit">Profit</label>
+      <input
+        id="profit"
+        type="number"
+        [(ngModel)]="form.profit"
+        name="profit"
+        step="0.01"
+        [disabled]="profitDisabled"
+      />
+      <small *ngIf="profitDisabled">Profit is 0 for Break Even, and −Risk for Loss trades.</small>
+    </div>
+    <div class="field">
+      <label for="entryDate">Entry Date</label>
+      <input id="entryDate" type="datetime-local" [(ngModel)]="form.entryDate" name="entryDate" required />
+    </div>
+    <div class="field">
+      <label for="exitDate">Exit Date</label>
+      <input id="exitDate" type="datetime-local" [(ngModel)]="form.exitDate" name="exitDate" required />
+    </div>
+
+    <div class="field">
+      <label>Screenshots</label>
+      <button type="button" class="btn-secondary" (click)="fileInput.click()">+ Add files</button>
+      <input #fileInput type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />
+      <ul class="pending-files" *ngIf="pendingFiles.length > 0">
+        <li *ngFor="let f of pendingFiles; let i = index">
+          <span>{{ f.name }}</span>
+          <button type="button" (click)="removeFile(i)">×</button>
+        </li>
+      </ul>
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <button type="submit" [disabled]="loading">{{ loading ? 'Saving…' : 'Save Trade' }}</button>
+  </form>
+</div>

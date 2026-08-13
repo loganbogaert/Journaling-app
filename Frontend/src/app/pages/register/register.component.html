@@ -1,0 +1,16 @@
+<div class="auth-container">
+  <h1>Register</h1>
+  <form (ngSubmit)="onSubmit()">
+    <div>
+      <label for="email">Email</label>
+      <input id="email" type="email" [(ngModel)]="email" name="email" required />
+    </div>
+    <div>
+      <label for="password">Password</label>
+      <input id="password" type="password" [(ngModel)]="password" name="password" required minlength="8" />
+    </div>
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <button type="submit" [disabled]="loading">{{ loading ? 'Creating account…' : 'Register' }}</button>
+  </form>
+  <p>Already have an account? <a routerLink="/login">Login</a></p>
+</div>

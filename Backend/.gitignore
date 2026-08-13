@@ -1,0 +1,2 @@
+# Node/env/log ignores are handled by the repo-root .gitignore.
+# Nothing backend-specific to ignore yet.

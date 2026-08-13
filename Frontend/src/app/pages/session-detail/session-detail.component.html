@@ -1,0 +1,40 @@
+<div class="page" *ngIf="!loading && session">
+  <header class="page-header">
+    <div>
+      <h1>{{ session.name }}</h1>
+      <span class="meta">
+        {{ session.currency }} · Initial: {{ formatDecimal(session.accountBalance) }}
+        <ng-container *ngIf="trades.length > 0">
+          → Current: {{ formatDecimal(currentBalance) }}
+          <span class="pct" [class.positive]="currentBalancePercent >= 0" [class.negative]="currentBalancePercent < 0">
+            ({{ currentBalancePercent >= 0 ? '+' : '' }}{{ formatDecimal(currentBalancePercent) }}%)
+          </span>
+        </ng-container>
+      </span>
+    </div>
+    <div class="actions">
+      <a [routerLink]="['/sessions', session.id, 'edit']" class="btn-secondary">Edit</a>
+      <button (click)="deleteSession()" class="btn-danger">Delete</button>
+      <a [routerLink]="['/sessions', session.id, 'trades', 'new']" class="btn-primary">+ New Trade</a>
+    </div>
+  </header>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <app-session-balance-chart
+    [balanceHistory]="balanceHistory"
+    [currency]="session.currency">
+  </app-session-balance-chart>
+
+  <section class="trades-section">
+    <h2>Trades</h2>
+    <app-trade-card
+      *ngFor="let trade of trades"
+      [trade]="trade">
+    </app-trade-card>
+    <p *ngIf="trades.length === 0">No trades in this session yet.</p>
+  </section>
+</div>
+
+<p *ngIf="loading">Loading…</p>
+<p class="error" *ngIf="error && !loading">{{ error }}</p>

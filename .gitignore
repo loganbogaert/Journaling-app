@@ -1,0 +1,23 @@
+# Repo-wide ignores shared by Backend and Frontend.
+# Project-specific extras live in Backend/.gitignore and Frontend/.gitignore.
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / filesystem junk
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+# Editors
+.idea/
+*.sublime-workspace

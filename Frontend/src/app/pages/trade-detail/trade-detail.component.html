@@ -1,0 +1,92 @@
+<p *ngIf="loading">Loading…</p>
+<p class="error" *ngIf="error && !loading">{{ error }}</p>
+
+<div class="page" *ngIf="!loading && trade">
+  <header class="page-header">
+    <div>
+      <h1>
+        {{ getPairName(trade.pairId) }}
+        <span class="trade-badge trade-badge--{{ trade.direction }}">{{ directionLabels[trade.direction] }}</span>
+        <span class="trade-badge trade-badge--{{ resultClass(trade.result) }}">{{ resultLabels[trade.result] }}</span>
+      </h1>
+      <span class="meta">{{ formatDate(trade.entryDate) }} → {{ formatDate(trade.exitDate) }}</span>
+    </div>
+    <div class="actions">
+      <a [routerLink]="['/trades', trade.id, 'edit']" class="btn-secondary">Edit</a>
+      <button (click)="deleteTrade()" class="btn-danger">Delete</button>
+    </div>
+  </header>
+
+  <div class="trade-stats">
+    <div class="trade-stat">
+      <span class="trade-stat__label">Entry</span>
+      <span class="trade-stat__value">{{ formatDecimal(trade.entry) }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">TP</span>
+      <span class="trade-stat__value">{{ formatDecimal(trade.tp) }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">SL</span>
+      <span class="trade-stat__value">{{ formatDecimal(trade.sl) }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Profit</span>
+      <span class="trade-stat__value">{{ formatDecimal(trade.profit) }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Risk</span>
+      <span class="trade-stat__value">{{ formatDecimal(trade.risk) }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Fee</span>
+      <span class="trade-stat__value">{{ formatDecimal(trade.fee) }}</span>
+    </div>
+  </div>
+
+  <section class="gallery-section">
+    <div class="gallery-section__header">
+      <h2>Screenshots</h2>
+      <button class="btn-secondary" (click)="fileInput.click()" [disabled]="uploading">
+        {{ uploading ? 'Uploading…' : '↑ Upload from desktop' }}
+      </button>
+      <input #fileInput type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />
+    </div>
+
+    <div class="gallery-grid" *ngIf="pictures.length > 0; else emptyGallery">
+      <div class="gallery-item" *ngFor="let pic of pictures; let i = index">
+        <img
+          [src]="pic.viewUrl"
+          [alt]="'Screenshot ' + (i + 1)"
+          (click)="openLightbox(i)"
+          loading="lazy"
+        />
+        <button class="gallery-item__delete" (click)="deletePicture(pic)" title="Remove">×</button>
+      </div>
+    </div>
+    <ng-template #emptyGallery>
+      <p class="gallery-empty" *ngIf="!uploading">No screenshots yet.</p>
+    </ng-template>
+  </section>
+</div>
+
+<!-- Lightbox overlay -->
+<div class="lightbox" *ngIf="lightboxIndex !== null" (click)="closeLightbox()">
+  <button class="lightbox__close" (click)="closeLightbox()">×</button>
+  <button
+    class="lightbox__nav lightbox__nav--prev"
+    *ngIf="lightboxIndex > 0"
+    (click)="$event.stopPropagation(); prevImage()"
+  >‹</button>
+  <img
+    [src]="pictures[lightboxIndex].viewUrl"
+    [alt]="'Screenshot ' + (lightboxIndex + 1)"
+    (click)="$event.stopPropagation()"
+  />
+  <button
+    class="lightbox__nav lightbox__nav--next"
+    *ngIf="lightboxIndex < pictures.length - 1"
+    (click)="$event.stopPropagation(); nextImage()"
+  >›</button>
+  <span class="lightbox__counter">{{ lightboxIndex + 1 }} / {{ pictures.length }}</span>
+</div>

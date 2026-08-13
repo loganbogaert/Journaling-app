@@ -1,0 +1,38 @@
+<section class="balance-chart" *ngIf="balanceHistory && balanceHistory.length > 1">
+  <div class="balance-chart__header">
+    <h2>Balance Progression</h2>
+    <span class="balance-chart__final" [class.positive]="isProfit" [class.negative]="!isProfit" *ngIf="lastPoint">
+      {{ formatDecimal(lastPoint.balance) }} {{ currency }}
+      <small>({{ lastPoint.percent >= 0 ? '+' : '' }}{{ formatDecimal(lastPoint.percent) }}%)</small>
+    </span>
+  </div>
+
+  <div class="balance-chart__area">
+    <canvas #canvasEl></canvas>
+
+    <div
+      class="balance-chart__tooltip"
+      *ngIf="activePoint as ap"
+      [class.align-start]="tooltipAlign === 'start'"
+      [class.align-end]="tooltipAlign === 'end'"
+      [style.left.px]="ap.x"
+      [style.top.px]="ap.y">
+      <span class="balance-chart__tooltip-date">{{ ap.data.tradeId ? formatDate(ap.data.date) : 'Starting balance' }}</span>
+      <span class="balance-chart__tooltip-balance">{{ formatDecimal(ap.data.balance) }} {{ currency }}</span>
+      <span
+        class="balance-chart__tooltip-change"
+        *ngIf="ap.data.tradeId"
+        [class.positive]="ap.data.profit >= 0"
+        [class.negative]="ap.data.profit < 0">
+        {{ ap.data.profit >= 0 ? '+' : '' }}{{ formatDecimal(ap.data.profit) }} {{ currency }}
+        ({{ ap.data.changePercent >= 0 ? '+' : '' }}{{ formatDecimal(ap.data.changePercent) }}%)
+      </span>
+      <span
+        class="balance-chart__tooltip-total"
+        [class.positive]="ap.data.percent >= 0"
+        [class.negative]="ap.data.percent < 0">
+        Total: {{ ap.data.percent >= 0 ? '+' : '' }}{{ formatDecimal(ap.data.percent) }}%
+      </span>
+    </div>
+  </div>
+</section>

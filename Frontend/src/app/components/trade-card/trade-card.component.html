@@ -1,0 +1,14 @@
+<a [routerLink]="['/trades', trade.id]" class="trade-card" [ngClass]="resultClass(trade.result)">
+  <div class="trade-card__meta">
+    <span class="direction">{{ directionLabels[trade.direction] }}</span>
+    <span class="result badge-{{ resultClass(trade.result) }}">{{ resultLabels[trade.result] }}</span>
+  </div>
+  <div class="trade-card__stats">
+    <span>Profit: {{ formatDecimal(trade.profit) }}</span>
+    <span>Risk: {{ formatDecimal(trade.risk) }}</span>
+    <span>Fee: {{ formatDecimal(trade.fee) }}</span>
+  </div>
+  <div class="trade-card__dates">
+    <span>{{ formatDate(trade.entryDate) }} → {{ formatDate(trade.exitDate) }}</span>
+  </div>
+</a>
