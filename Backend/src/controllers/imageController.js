@@ -1,7 +1,6 @@
 'use strict';
 
 const Minio = require('minio');
-const { Trade, Session } = require('../models');
 
 // Fixed region avoids the SDK's automatic getBucketRegion lookup, which requires
 // actually connecting to `endPoint` — that call fails when MINIO_PUBLIC_ENDPOINT
@@ -30,15 +29,8 @@ const minioPublicClient = new Minio.Client({
 
 exports.createUrls = async (req, res, next) => {
   try {
-    const { userId } = req.user;
     const { tradeId } = req.params;
     const { count } = req.body;
-
-    const trade = await Trade.findByPk(tradeId);
-    if (!trade) return res.status(404).json({ message: 'Trade not found' });
-
-    const session = await Session.findByPk(trade.sessionId);
-    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     const parsedCount = Number(count);
     if (!Number.isInteger(parsedCount) || parsedCount <= 0) {
@@ -75,15 +67,8 @@ exports.createUrls = async (req, res, next) => {
 
 exports.getUrls = async (req, res, next) => {
   try {
-    const { userId } = req.user;
     const { tradeId } = req.params;
     const bucket = process.env.MINIO_BUCKET;
-
-    const trade = await Trade.findByPk(tradeId);
-    if (!trade) return res.status(404).json({ message: 'Trade not found' });
-
-    const session = await Session.findByPk(trade.sessionId);
-    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     if (!bucket) {
       const err = new Error('Server misconfiguration: MINIO_BUCKET env var is not set');
@@ -121,17 +106,8 @@ exports.getUrls = async (req, res, next) => {
 
 exports.deleteObject = async (req, res, next) => {
   try {
-    const { userId } = req.user;
     const { objectName } = req.body;
     if (!objectName) return res.status(400).json({ message: 'objectName is required' });
-
-    // objectName is "<tradeId>/<file>" — recover the tradeId to check ownership
-    const tradeId = objectName.split('/')[0];
-    const trade = await Trade.findByPk(tradeId);
-    if (!trade) return res.status(404).json({ message: 'Trade not found' });
-
-    const session = await Session.findByPk(trade.sessionId);
-    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     await minioClient.removeObject(process.env.MINIO_BUCKET, objectName);
     return res.status(204).send();
