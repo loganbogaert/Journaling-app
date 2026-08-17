@@ -1,8 +1,10 @@
-/** Base URL for all API calls. Override via environment if needed. */
+/** Base URL for all API calls. Routed through Kong. */
 export const API_BASE_URL = '/api';
 
-/** JWT storage key in localStorage */
-export const TOKEN_KEY = 'tj_token';
+/** Keycloak connection info. Routed through Kong at "/auth" (see kong/kong.yml). */
+export const KEYCLOAK_URL = '/auth';
+export const KEYCLOAK_REALM = 'trading-journal';
+export const KEYCLOAK_CLIENT_ID = 'trading-journal-frontend';
 
 /** Trade result labels */
 export const TRADE_RESULT_LABELS: Record<string, string> = {

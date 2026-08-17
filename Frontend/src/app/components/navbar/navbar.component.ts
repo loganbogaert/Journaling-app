@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../services/auth.service';
-import { isAuthenticated } from '../../utils/helpers';
+import { KeycloakService } from '../../services/keycloak.service';
 
 @Component({
   selector: 'app-navbar',
@@ -11,12 +10,14 @@ import { isAuthenticated } from '../../utils/helpers';
   templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {
-  readonly isAuthenticated = isAuthenticated;
+  constructor(private keycloak: KeycloakService, private router: Router) {}
 
-  constructor(private auth: AuthService, private router: Router) {}
+  get isAuthenticated(): boolean {
+    return this.keycloak.authenticated;
+  }
 
   logout(): void {
-    this.auth.logout();
-    this.router.navigate(['/login']);
+    this.keycloak.logout();
+    this.router.navigateByUrl('/login');
   }
 }

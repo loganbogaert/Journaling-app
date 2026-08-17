@@ -38,7 +38,7 @@ exports.getById = async (req, res, next) => {
     const session = await Session.findByPk(req.params.id);
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
-    if (Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     return res.status(200).json(session);
   } catch (err) {
@@ -52,7 +52,7 @@ exports.update = async (req, res, next) => {
     const session = await Session.findByPk(req.params.id);
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
-    if (Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     await session.update(req.body);
     return res.status(200).json(session);
@@ -67,7 +67,7 @@ exports.delete = async (req, res, next) => {
     const session = await Session.findByPk(req.params.id);
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
-    if (Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     await session.destroy();
     return res.status(204).send();

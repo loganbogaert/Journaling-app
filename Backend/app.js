@@ -2,12 +2,14 @@
 
 const express = require('express');
 const cors = require('cors');
+const gateway = require('./src/middleware/gateway');
 const routes = require('./src/routes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(gateway);
 
 app.use('/', routes);
 

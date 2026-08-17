@@ -12,7 +12,7 @@ exports.add = async (req, res, next) => {
     if (!trade) return res.status(404).json({ message: 'Trade not found' });
 
     const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     const picture = await TradePicture.create({ tradeId, pictureUrl });
     return res.status(201).json(picture);
@@ -33,7 +33,7 @@ exports.getAll = async (req, res, next) => {
     if (!trade) return res.status(404).json({ message: 'Trade not found' });
 
     const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     const pictures = await TradePicture.findAll({ where: { tradeId } });
     return res.status(200).json(pictures);
@@ -52,7 +52,7 @@ exports.delete = async (req, res, next) => {
     if (!trade) return res.status(404).json({ message: 'Trade not found' });
 
     const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     await picture.destroy();
     return res.status(204).send();

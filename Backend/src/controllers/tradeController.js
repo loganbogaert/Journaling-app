@@ -16,7 +16,7 @@ exports.create = async (req, res, next) => {
 
     const session = await Session.findByPk(sessionId);
     if (!session) return res.status(404).json({ message: 'Session not found' });
-    if (Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     const safeProfit = computeGrossProfit(result, risk, profit);
 
@@ -56,7 +56,7 @@ exports.getBySession = async (req, res, next) => {
     }
 
     // Make sure the session belongs to the authenticated user
-    if (Number(session.userId) !== Number(userId)) {
+    if (String(session.userId) !== String(userId)) {
       return res.status(403).json({
         message: 'Unauthorized',
       });
@@ -201,7 +201,7 @@ exports.getById = async (req, res, next) => {
     if (!trade) return res.status(404).json({ message: 'Trade not found' });
 
     const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     return res.status(200).json(trade);
   } catch (err) {
@@ -216,7 +216,7 @@ exports.update = async (req, res, next) => {
     if (!trade) return res.status(404).json({ message: 'Trade not found' });
 
     const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     // A trade can't be moved to another session through this endpoint
     const { sessionId, id, createdAt, updatedAt, ...updatableFields } = req.body;
@@ -239,7 +239,7 @@ exports.delete = async (req, res, next) => {
     if (!trade) return res.status(404).json({ message: 'Trade not found' });
 
     const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    if (!session || String(session.userId) !== String(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     await trade.destroy();
     return res.status(204).send();

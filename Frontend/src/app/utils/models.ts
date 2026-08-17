@@ -1,17 +1,15 @@
 export interface User {
-  id: number;
-  email: string;
-  createdAt?: string;
-}
-
-export interface AuthResponse {
-  accessToken: string;
-  user: User;
+  /** Keycloak subject (`sub` claim) */
+  id: string;
+  email?: string;
+  name?: string;
+  roles?: string[];
 }
 
 export interface Session {
   id: number;
-  userId: number;
+  /** Keycloak subject (`sub` claim) of the owning user */
+  userId: string;
   name: string;
   accountBalance: number;
   currency: string;

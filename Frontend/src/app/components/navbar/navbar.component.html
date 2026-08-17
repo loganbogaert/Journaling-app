@@ -1,6 +1,6 @@
 <nav class="navbar">
   <a routerLink="/dashboard" class="brand">Trading Journal</a>
-  <div class="nav-links" *ngIf="isAuthenticated()">
+  <div class="nav-links" *ngIf="isAuthenticated">
     <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
     <button (click)="logout()">Logout</button>
   </div>
