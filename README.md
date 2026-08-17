@@ -63,3 +63,4 @@ docker-compose.yml
   docker compose build frontend && docker compose up -d frontend
   ```
 - Backend migrations live in `Backend/src/infrastructure/database/migrations`, managed with `sequelize-cli`.
+- The frontend reads its Keycloak config (`KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`) from real container env vars at startup, not from the build — `Frontend/docker-entrypoint.d/40-generate-env.sh` renders `public/env.template.js` into `env.js` (loaded by `index.html` before the Angular bundle) using whatever values are set on the `frontend` service in `docker-compose.yml`. Change them there and restart the container; no rebuild needed.

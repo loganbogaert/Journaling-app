@@ -124,6 +124,12 @@ services:
       dockerfile: Dockerfile
     container_name: trading_journal_frontend
     restart: unless-stopped
+    environment:
+      # Public-facing Keycloak config, injected into window.__env at container startup
+      # (see Frontend/docker-entrypoint.d/40-generate-env.sh) — never baked into the build.
+      KEYCLOAK_URL: /auth
+      KEYCLOAK_REALM: trading-journal
+      KEYCLOAK_CLIENT_ID: trading-journal-frontend
     depends_on:
       - backend
 
