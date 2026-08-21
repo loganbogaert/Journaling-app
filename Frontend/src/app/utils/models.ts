@@ -38,6 +38,7 @@ export interface Trade {
   fee: number;
   profit: number;
   result: 'W' | 'BE' | 'L';
+  notes?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

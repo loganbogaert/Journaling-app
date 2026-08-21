@@ -66,6 +66,11 @@
     </div>
 
     <div class="field">
+      <label for="notes">Notes <span class="optional">(optional)</span></label>
+      <textarea id="notes" [(ngModel)]="form.notes" name="notes" rows="5" placeholder="Trade rationale, mistakes, lessons learned…"></textarea>
+    </div>
+
+    <div class="field">
       <label>Screenshots</label>
       <button type="button" class="btn-secondary" (click)="fileInput.click()">+ Add files</button>
       <input #fileInput type="file" accept="image/*" multiple hidden (change)="onFilesSelected($event)" />

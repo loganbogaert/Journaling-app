@@ -50,6 +50,11 @@
     </div>
   </div>
 
+  <section class="notes-section" *ngIf="trade.notes">
+    <h2>Notes</h2>
+    <p class="notes-content">{{ trade.notes }}</p>
+  </section>
+
   <section class="gallery-section">
     <div class="gallery-section__header">
       <h2>Screenshots</h2>

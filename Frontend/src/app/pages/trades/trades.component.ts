@@ -35,6 +35,7 @@ export class TradesComponent implements OnInit {
     fee: null as number | null,
     profit: null as number | null,
     result: 'W' as 'W' | 'BE' | 'L',
+    notes: '' as string,
   };
 
   get profitDisabled(): boolean {
@@ -98,6 +99,7 @@ export class TradesComponent implements OnInit {
           this.form.fee = Number(t.fee);
           this.form.profit = Number(t.profit);
           this.form.result = t.result;
+          this.form.notes = t.notes ?? '';
         },
       });
     }
@@ -121,6 +123,7 @@ export class TradesComponent implements OnInit {
         ? -Math.abs(this.form.risk ?? 0)
         : this.form.result === 'BE' ? 0 : (this.form.profit ?? 0),
       result: this.form.result,
+      notes: this.form.notes.trim() || null,
     };
 
     const request = this.isEdit && this.tradeId

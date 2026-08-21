@@ -381,9 +381,16 @@ button[type='submit'] {
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-secondary);
+
+      .optional {
+        text-transform: none;
+        font-weight: 400;
+        letter-spacing: normal;
+        color: var(--text-muted);
+      }
     }
 
-    input, select {
+    input, select, textarea {
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--r-sm);
@@ -402,6 +409,12 @@ button[type='submit'] {
       }
 
       option { background: var(--bg-card); }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 5rem;
+      line-height: 1.5;
     }
 
     // Custom select arrow
@@ -763,6 +776,31 @@ p:not(.error):not(.date) {
     font-size: 1.25rem;
     font-weight: 600;
     color: var(--text-primary);
+  }
+}
+
+// ── Notes ─────────────────────────────────────────────────────────────────────
+
+.notes-section {
+  margin-bottom: 2.5rem;
+
+  h2 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .notes-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    line-height: 1.6;
   }
 }
 
