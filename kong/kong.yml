@@ -1,0 +1,86 @@
+_format_version: "3.0"
+_transform: true
+
+# Kong is the single public entrypoint (replaces the old nginx reverse-proxy in Frontend/).
+# It routes:
+#   /          -> frontend (Angular SPA, static files)
+#   /auth/*    -> Keycloak (hosted login/registration/token endpoints)
+#   /api/*     -> backend, after verifying the caller's Keycloak access token
+#   /minio/*   -> MinIO (trade picture storage)
+#
+# Auth model:
+#   - Keycloak issues/validates user identity & tokens.
+#   - Kong forwards every /api request to the backend and stamps a shared secret header on
+#     the way through (pre-function, reading KONG_GATEWAY_SECRET from the environment — never
+#     checked into this file), so the backend can prove the request came through Kong and
+#     never accepts direct traffic.
+#   - The backend does the actual token verification: it independently checks every Bearer
+#     token's signature/expiry against Keycloak's JWKS (src/middleware/auth.js).
+#
+# NOTE: the plain open-source `kong` Docker image does not ship the `openid-connect` plugin
+# (it's Kong Gateway Enterprise/Konnect-only), so it isn't used here. If you switch to an
+# image/license that includes it, you can add it to this service's plugins for gateway-level
+# token validation in addition to the backend's own check.
+
+services:
+  - name: frontend
+    url: http://frontend:80
+    routes:
+      - name: frontend-route
+        paths:
+          - /
+        strip_path: false
+
+  - name: keycloak
+    url: http://keycloak:8080
+    routes:
+      - name: keycloak-route
+        paths:
+          - /auth
+        # Keycloak itself serves everything under /auth (KC_HTTP_RELATIVE_PATH in
+        # docker-compose.yml), so the prefix must be preserved, not stripped.
+        strip_path: false
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods: [GET, POST, PUT, DELETE, OPTIONS]
+          headers: [Accept, Authorization, Content-Type]
+          credentials: true
+
+  - name: backend-api
+    url: http://backend:3000
+    routes:
+      - name: backend-api-route
+        paths:
+          - /api
+        strip_path: true
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods: [GET, POST, PUT, DELETE, OPTIONS]
+          headers: [Accept, Authorization, Content-Type]
+          credentials: true
+      - name: pre-function
+        config:
+          access:
+            - |
+              kong.service.request.set_header("X-Gateway-Secret", os.getenv("KONG_GATEWAY_SECRET"))
+
+  - name: minio
+    url: http://minio:9000
+    routes:
+      - name: minio-route
+        paths:
+          - /minio
+        strip_path: true
+    plugins:
+      - name: cors
+        config:
+          origins:
+            - "*"
+          methods: [GET, PUT, HEAD, OPTIONS]
+          headers: [Accept, Content-Type]

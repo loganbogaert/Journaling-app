@@ -1,25 +1,20 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
-import { getToken, removeToken } from '../utils/helpers';
+import { catchError, from, switchMap, throwError } from 'rxjs';
+import { KeycloakService } from '../services/keycloak.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = getToken();
-  const router = inject(Router);
+  const keycloak = inject(KeycloakService);
 
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  return next(req).pipe(
+  return from(keycloak.ensureFreshToken()).pipe(
+    switchMap((token) => {
+      const authReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+      return next(authReq);
+    }),
     catchError((err: HttpErrorResponse) => {
-      // Redirect to login on 401 from protected endpoints; skip auth routes to preserve their own error handling
-      if (err.status === 401 && !req.url.includes('/auth/')) {
-        removeToken();
-        router.navigateByUrl('/login');
+      // Session expired/invalid — send the user back through Keycloak's login page
+      if (err.status === 401) {
+        keycloak.login();
       }
       return throwError(() => err);
     })

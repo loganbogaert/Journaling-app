@@ -1,6 +1,6 @@
 'use strict';
 
-const { Trade, Session } = require('../models');
+const { Trade } = require('../models');
 
 // A loss forfeits the full risked amount; break-even keeps principal intact; wins use the entered profit
 function computeGrossProfit(result, risk, profit) {
@@ -11,12 +11,7 @@ function computeGrossProfit(result, risk, profit) {
 
 exports.create = async (req, res, next) => {
   try {
-    const { userId } = req.user;
     const { sessionId, pairId, entry, tp, sl, entryDate, exitDate, direction, risk, fee, profit, result } = req.body;
-
-    const session = await Session.findByPk(sessionId);
-    if (!session) return res.status(404).json({ message: 'Session not found' });
-    if (Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
 
     const safeProfit = computeGrossProfit(result, risk, profit);
 
@@ -43,24 +38,8 @@ exports.create = async (req, res, next) => {
 
 exports.getBySession = async (req, res, next) => {
   try {
-    const { userId } = req.user;
     const { sessionId } = req.params;
-
-    // Check that the session exists
-    const session = await Session.findByPk(sessionId);
-
-    if (!session) {
-      return res.status(404).json({
-        message: 'Session not found',
-      });
-    }
-
-    // Make sure the session belongs to the authenticated user
-    if (Number(session.userId) !== Number(userId)) {
-      return res.status(403).json({
-        message: 'Unauthorized',
-      });
-    }
+    const session = req.ownedSession;
 
     // Get all trades in chronological order
     const trades = await Trade.findAll({
@@ -196,14 +175,7 @@ exports.getBySession = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const { userId } = req.user;
-    const trade = await Trade.findByPk(req.params.id);
-    if (!trade) return res.status(404).json({ message: 'Trade not found' });
-
-    const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
-
-    return res.status(200).json(trade);
+    return res.status(200).json(req.ownedTrade);
   } catch (err) {
     next(err);
   }
@@ -211,12 +183,7 @@ exports.getById = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const { userId } = req.user;
-    const trade = await Trade.findByPk(req.params.id);
-    if (!trade) return res.status(404).json({ message: 'Trade not found' });
-
-    const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
+    const trade = req.ownedTrade;
 
     // A trade can't be moved to another session through this endpoint
     const { sessionId, id, createdAt, updatedAt, ...updatableFields } = req.body;
@@ -234,14 +201,7 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
-    const { userId } = req.user;
-    const trade = await Trade.findByPk(req.params.id);
-    if (!trade) return res.status(404).json({ message: 'Trade not found' });
-
-    const session = await Session.findByPk(trade.sessionId);
-    if (!session || Number(session.userId) !== Number(userId)) return res.status(403).json({ message: 'Unauthorized' });
-
-    await trade.destroy();
+    await req.ownedTrade.destroy();
     return res.status(204).send();
   } catch (err) {
     next(err);

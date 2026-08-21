@@ -8,7 +8,8 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
     },
     userId: {
-      type: DataTypes.INTEGER,
+      // Keycloak subject (`sub` claim) — no longer a local FK, Keycloak owns identity now
+      type: DataTypes.STRING(36),
       allowNull: false,
     },
     name: {
@@ -34,7 +35,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Session.associate = (models) => {
-    Session.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     Session.hasMany(models.Trade, { foreignKey: 'sessionId', as: 'trades', onDelete: 'CASCADE' });
   };
 

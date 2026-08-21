@@ -1,20 +1,15 @@
-import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { inject } from '@angular/core';
-import { Observable, map, catchError, of } from 'rxjs';
-import { AuthService } from '../services/auth.service';
-import { getToken } from './helpers';
+import { KeycloakService } from '../services/keycloak.service';
 
-export const authGuard: CanActivateFn = (): boolean | UrlTree | Observable<boolean | UrlTree> => {
-  const router = inject(Router);
+export const authGuard: CanActivateFn = async (): Promise<boolean> => {
+  const keycloak = inject(KeycloakService);
 
-  // Token already present — no need to hit the refresh endpoint
-  if (getToken()) {
+  if (keycloak.authenticated) {
     return true;
   }
 
-  // No token — attempt silent refresh via httpOnly cookie
-  return inject(AuthService).refresh().pipe(
-    map(() => true),
-    catchError(() => of(router.createUrlTree(['/login'])))
-  );
+  // Not authenticated — redirect to Keycloak's hosted login page
+  await keycloak.login();
+  return false;
 };

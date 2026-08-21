@@ -108,6 +108,7 @@ exports.deleteObject = async (req, res, next) => {
   try {
     const { objectName } = req.body;
     if (!objectName) return res.status(400).json({ message: 'objectName is required' });
+
     await minioClient.removeObject(process.env.MINIO_BUCKET, objectName);
     return res.status(204).send();
   } catch (err) {
