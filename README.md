@@ -41,23 +41,26 @@ docker-compose.yml
 
 ## Getting started
 
-1. Copy the env template and fill in real values (including `KEYCLOAK_ADMIN`, `KEYCLOAK_ADMIN_PASSWORD`, `KEYCLOAK_DB_PASSWORD` and `KONG_GATEWAY_SECRET`):
+1. Copy the env template and customize values as needed:
    ```
    cp .env.example .env
    ```
-2. Build and start everything:
+2. For local development with backend and frontend hot reload:
+   ```
+   npm run dev
+   ```
+   Open `http://localhost:4200`. This starts infrastructure in Docker, runs migrations and seeders, and watches changes in `Backend/` and `Frontend/`. For convenience, the local Compose override supplies `admin`/`changeme` Keycloak credentials and a local gateway secret when they are absent from `.env`; set your own values there to override them. The development server origin is authorized in Keycloak alongside Kong. Use `npm run dev:down` to stop the stack.
+3. For a production-like local build:
    ```
    docker compose up -d --build
-   ```
-3. Run database migrations (first run only):
-   ```
-   docker compose exec backend npm run db:migrate
    ```
 4. The app is served through Kong on `http://localhost:8000`. Keycloak's admin console is reachable directly on `http://localhost:8080` for user/role management (e.g. assigning the `trader` or `admin` realm role to a new user — the `trading-journal` realm, its client and roles are auto-imported from `keycloak/realm-export.json` on first boot).
 
 ## Development notes
 
-- Backend and frontend Docker images bake the source at build time (no live volume mount) — after changing `Backend/` or `Frontend/` sources, rebuild the corresponding service:
+- `npm run dev` composes `docker-compose.yml` with `docker-compose.dev.yml`. It bind-mounts both applications, runs the backend with Nodemon, and runs the frontend with Angular's development server. The frontend proxies `/api`, `/auth`, and `/minio` to Kong while preserving the browser host, so Keycloak redirects back to the local development server.
+- Local Compose defaults Kong to one Nginx worker to avoid Docker Desktop worker initialization delays. Set `KONG_NGINX_WORKER_PROCESSES` in `.env` to increase it when deploying to a higher-throughput environment.
+- The production-like Compose images bake the source at build time (no live volume mount) — after changing `Backend/` or `Frontend/` sources, rebuild the corresponding service:
   ```
   docker compose build backend && docker compose up -d backend
   docker compose build frontend && docker compose up -d frontend

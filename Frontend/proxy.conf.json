@@ -1,0 +1,17 @@
+{
+  "/api": {
+    "target": "http://kong:8000",
+    "changeOrigin": false,
+    "secure": false
+  },
+  "/auth": {
+    "target": "http://kong:8000",
+    "changeOrigin": false,
+    "secure": false
+  },
+  "/minio": {
+    "target": "http://kong:8000",
+    "changeOrigin": false,
+    "secure": false
+  }
+}
