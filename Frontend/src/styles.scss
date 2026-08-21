@@ -728,6 +728,12 @@ p:not(.error):not(.date) {
   &--breakeven  { background: var(--be-bg); color: var(--be); border: 1px solid var(--be-border); }
 }
 
+.trade-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
 .trade-stats {
   display: flex;
   gap: 1.5rem;

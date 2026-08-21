@@ -1,7 +1,7 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { forkJoin, switchMap } from 'rxjs';
+import { forkJoin, switchMap, map } from 'rxjs';
 import { TradeService } from '../../services/trade.service';
 import { PairService } from '../../services/pair.service';
 import { ImageService, ImageEntry } from '../../services/image.service';
@@ -19,6 +19,7 @@ export class TradeDetailComponent implements OnInit {
   trade: Trade | null = null;
   pairs: Pair[] = [];
   pictures: ImageEntry[] = [];
+  sessionTrades: Trade[] = [];
   loading = true;
   uploading = false;
   error = '';
@@ -40,16 +41,34 @@ export class TradeDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const tradeId = Number(this.route.snapshot.paramMap.get('tradeId'));
+    // Route is reused when navigating between trades via next/previous, so react to param changes
+    this.route.paramMap.subscribe((params) => {
+      const tradeId = Number(params.get('tradeId'));
+      this.loadTrade(tradeId);
+    });
+  }
+
+  private loadTrade(tradeId: number): void {
+    this.loading = true;
+    this.error = '';
+    this.lightboxIndex = null;
+
     forkJoin({
       trade: this.tradeService.getById(tradeId),
       pairs: this.pairService.getAll(),
       images: this.imageService.getViewUrls(tradeId),
-    }).subscribe({
-      next: ({ trade, pairs, images }) => {
+    }).pipe(
+      switchMap(({ trade, pairs, images }) =>
+        this.tradeService.getBySession(trade.sessionId).pipe(
+          map((sessionData) => ({ trade, pairs, images, sessionTrades: sessionData.trades }))
+        )
+      )
+    ).subscribe({
+      next: ({ trade, pairs, images, sessionTrades }) => {
         this.trade = trade;
         this.pairs = pairs;
         this.pictures = images.urls;
+        this.sessionTrades = sessionTrades;
         this.loading = false;
       },
       error: (err) => {
@@ -57,6 +76,28 @@ export class TradeDetailComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  private get currentTradeIndex(): number {
+    return this.trade ? this.sessionTrades.findIndex((t) => t.id === this.trade!.id) : -1;
+  }
+
+  get previousTrade(): Trade | null {
+    const idx = this.currentTradeIndex;
+    return idx > 0 ? this.sessionTrades[idx - 1] : null;
+  }
+
+  get nextTrade(): Trade | null {
+    const idx = this.currentTradeIndex;
+    return idx >= 0 && idx < this.sessionTrades.length - 1 ? this.sessionTrades[idx + 1] : null;
+  }
+
+  goToPreviousTrade(): void {
+    if (this.previousTrade) this.router.navigate(['/trades', this.previousTrade.id]);
+  }
+
+  goToNextTrade(): void {
+    if (this.nextTrade) this.router.navigate(['/trades', this.nextTrade.id]);
   }
 
   getPairName(pairId: number): string {
@@ -109,7 +150,11 @@ export class TradeDetailComponent implements OnInit {
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
-    if (this.lightboxIndex === null) return;
+    if (this.lightboxIndex === null) {
+      if (event.key === 'ArrowLeft') this.goToPreviousTrade();
+      if (event.key === 'ArrowRight') this.goToNextTrade();
+      return;
+    }
     if (event.key === 'Escape') this.closeLightbox();
     if (event.key === 'ArrowLeft') this.prevImage();
     if (event.key === 'ArrowRight') this.nextImage();
