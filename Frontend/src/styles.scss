@@ -743,8 +743,11 @@ p:not(.error):not(.date) {
 
 .trade-nav {
   display: flex;
-  justify-content: space-between;
   margin-bottom: 1.5rem;
+}
+
+.trade-nav__next {
+  margin-left: auto;
 }
 
 .trade-stats {

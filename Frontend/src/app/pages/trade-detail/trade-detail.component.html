@@ -19,8 +19,8 @@
   </header>
 
   <nav class="trade-nav">
-    <button class="btn-secondary" [disabled]="!previousTrade" (click)="goToPreviousTrade()">‹ Previous Trade</button>
-    <button class="btn-secondary" [disabled]="!nextTrade" (click)="goToNextTrade()">Next Trade ›</button>
+    <button class="btn-secondary trade-nav__prev" *ngIf="previousTrade" (click)="goToPreviousTrade()">‹ Previous Trade</button>
+    <button class="btn-secondary trade-nav__next" *ngIf="nextTrade" (click)="goToNextTrade()">Next Trade ›</button>
   </nav>
 
   <div class="trade-stats">

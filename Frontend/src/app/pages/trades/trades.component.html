@@ -1,5 +1,8 @@
 <div class="page form-page">
-  <h1>{{ isEdit ? 'Edit Trade' : 'New Trade' }}</h1>
+  <header class="page-header">
+    <h1>{{ isEdit ? 'Edit Trade' : 'New Trade' }}</h1>
+    <a [routerLink]="['/sessions', sessionId]" class="btn-secondary">← Back to Session</a>
+  </header>
 
   <form (ngSubmit)="onSubmit()">
     <div class="field">
