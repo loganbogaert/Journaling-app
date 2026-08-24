@@ -12,10 +12,16 @@
       <span class="meta">{{ formatDate(trade.entryDate) }} → {{ formatDate(trade.exitDate) }}</span>
     </div>
     <div class="actions">
+      <a [routerLink]="['/sessions', trade.sessionId]" class="btn-secondary">← Back to Session</a>
       <a [routerLink]="['/trades', trade.id, 'edit']" class="btn-secondary">Edit</a>
       <button (click)="deleteTrade()" class="btn-danger">Delete</button>
     </div>
   </header>
+
+  <nav class="trade-nav">
+    <button class="btn-secondary" [disabled]="!previousTrade" (click)="goToPreviousTrade()">‹ Previous Trade</button>
+    <button class="btn-secondary" [disabled]="!nextTrade" (click)="goToNextTrade()">Next Trade ›</button>
+  </nav>
 
   <div class="trade-stats">
     <div class="trade-stat">
@@ -43,6 +49,11 @@
       <span class="trade-stat__value">{{ formatDecimal(trade.fee) }}</span>
     </div>
   </div>
+
+  <section class="notes-section" *ngIf="trade.notes">
+    <h2>Notes</h2>
+    <p class="notes-content">{{ trade.notes }}</p>
+  </section>
 
   <section class="gallery-section">
     <div class="gallery-section__header">

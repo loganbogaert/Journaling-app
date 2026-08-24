@@ -11,7 +11,7 @@ function computeGrossProfit(result, risk, profit) {
 
 exports.create = async (req, res, next) => {
   try {
-    const { sessionId, pairId, entry, tp, sl, entryDate, exitDate, direction, risk, fee, profit, result } = req.body;
+    const { sessionId, pairId, entry, tp, sl, entryDate, exitDate, direction, risk, fee, profit, result, notes } = req.body;
 
     const safeProfit = computeGrossProfit(result, risk, profit);
 
@@ -28,6 +28,7 @@ exports.create = async (req, res, next) => {
       fee: (fee === null || fee === '') ? 0 : fee,
       profit: safeProfit,
       result,
+      notes: notes || null,
     });
 
     return res.status(201).json(trade);
