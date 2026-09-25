@@ -8,6 +8,9 @@ module.exports = {
       { id: 2, pair: 'ETHUSDC' },
       { id: 3, pair: 'XAUUSD'  },
       { id: 4, pair: 'SP500'   },
+      { id: 5, pair: 'OILUSD'   },
+      { id: 6, pair: 'SOLUSDC'   },
+      { id: 7, pair: 'NASDAQ'   }
     ], { ignoreDuplicates: true });
   },
 

@@ -17,7 +17,9 @@ const minioClient = new Minio.Client({
   region: MINIO_REGION,
 });
 
-// Public client — generates presigned URLs signed with the browser-reachable host
+// Public client — generates presigned URLs signed with the browser-reachable host. That
+// host is Kong's own public endpoint (MINIO_PUBLIC_ENDPOINT/PORT), so the browser reaches
+// MinIO through the gateway instead of MinIO's own port — see toGatewayUrl() below.
 const minioPublicClient = new Minio.Client({
   endPoint: process.env.MINIO_PUBLIC_ENDPOINT || process.env.MINIO_ENDPOINT,
   port: Number(process.env.MINIO_PUBLIC_PORT) || Number(process.env.MINIO_PORT) || 9000,
@@ -26,6 +28,18 @@ const minioPublicClient = new Minio.Client({
   secretKey: process.env.MINIO_ROOT_PASSWORD,
   region: MINIO_REGION,
 });
+
+// Must match the route path in kong/kong.yml's minio service.
+const GATEWAY_MINIO_PREFIX = '/minio';
+
+// Inserts Kong's /minio path prefix into a presigned URL so the browser's request goes
+// through Kong. Safe post-signing: Kong strips this prefix (strip_path: true) before
+// forwarding, so MinIO receives the exact path/query that was originally signed.
+const toGatewayUrl = (presignedUrl) => {
+  const parsed = new URL(presignedUrl);
+  parsed.pathname = `${GATEWAY_MINIO_PREFIX}${parsed.pathname}`;
+  return parsed.toString();
+}
 
 exports.createUrls = async (req, res, next) => {
   try {
@@ -51,7 +65,7 @@ exports.createUrls = async (req, res, next) => {
       // objectName uses tradeId as folder prefix to group a trade's pictures
       const objectName = `${tradeId}/${prefix}-${i}`;
       try {
-        const uploadUrl = await minioPublicClient.presignedPutObject(bucket, objectName, 3600);
+        const uploadUrl = toGatewayUrl(await minioPublicClient.presignedPutObject(bucket, objectName, 3600));
         urls.push({ uploadUrl, objectName });
       } catch (err) {
         err.message = `Failed to presign upload URL for "${bucket}/${objectName}": ${err.message}`;
@@ -90,7 +104,8 @@ exports.getUrls = async (req, res, next) => {
     const urls = await Promise.all(
       objectNames.map(async (name) => {
         try {
-          return { objectName: name, viewUrl: await minioPublicClient.presignedGetObject(bucket, name, 3600) };
+          const viewUrl = toGatewayUrl(await minioPublicClient.presignedGetObject(bucket, name, 3600));
+          return { objectName: name, viewUrl };
         } catch (err) {
           err.message = `Failed to presign view URL for "${bucket}/${name}": ${err.message}`;
           throw err;

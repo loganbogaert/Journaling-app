@@ -6,7 +6,7 @@ _transform: true
 #   /          -> frontend (Angular SPA, static files)
 #   /auth/*    -> Keycloak (hosted login/registration/token endpoints)
 #   /api/*     -> backend, after verifying the caller's Keycloak access token
-#   /minio/*   -> MinIO (trade picture storage)
+#   /minio/*   -> MinIO (trade picture storage, via presigned URLs the backend generates)
 #
 # Auth model:
 #   - Keycloak issues/validates user identity & tokens.
@@ -77,6 +77,10 @@ services:
         paths:
           - /minio
         strip_path: true
+        # Presigned S3 URLs sign the "Host" header; the backend signs them against Kong's
+        # public host:port (see MINIO_PUBLIC_ENDPOINT/PORT), so that same Host must reach
+        # MinIO unchanged or signature verification fails.
+        preserve_host: true
     plugins:
       - name: cors
         config:
