@@ -143,6 +143,9 @@ services:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
+      # Docker Desktop reports many host CPUs, but local traffic is small and a single worker
+      # avoids intermittent per-worker initialization delays.
+      KONG_NGINX_WORKER_PROCESSES: ${KONG_NGINX_WORKER_PROCESSES:-1}
       # Makes the env var visible to os.getenv() in Lua plugins (pre-function below)
       KONG_NGINX_MAIN_ENV: KONG_GATEWAY_SECRET
       KONG_GATEWAY_SECRET: ${KONG_GATEWAY_SECRET}
