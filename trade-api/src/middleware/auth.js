@@ -1,6 +1,5 @@
 'use strict';
 
-const jwt = require('jsonwebtoken');
 const verifyKeycloakToken = require('./verifyKeycloakToken');
 
 const KEYCLOAK_REALM = process.env.KEYCLOAK_REALM;
@@ -14,7 +13,7 @@ const auth = (req, res, next) => {
   }
 
   const token = authHeader.split(' ')[1];
-  verifyKeycloakToken(token, {}, (err, decoded) => {
+  verifyKeycloakToken(token, (err, decoded) => {
       if (err) return res.status(401).json({ message: 'Invalid or expired token' });
 
       req.user = {

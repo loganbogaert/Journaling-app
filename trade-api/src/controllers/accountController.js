@@ -1,11 +1,15 @@
 'use strict';
 
 const { Account } = require('../models');
+const brokerSyncClient = require('../services/brokerSyncClient');
 
 exports.create = async (req, res, next) => {
   try {
     const { userId } = req.user;
-    const { type, name, accountBalance, currency, startDate, endDate } = req.body;
+    const {
+      type, name, accountBalance, currency, startDate, endDate,
+      platform, brokerServer, brokerLogin,
+    } = req.body;
 
     const account = await Account.create({
       userId,
@@ -15,9 +19,29 @@ exports.create = async (req, res, next) => {
       currency,
       startDate: startDate ?? null,
       endDate: endDate ?? null,
+      platform: platform ?? null,
+      brokerServer: brokerServer ?? null,
+      brokerLogin: brokerLogin ?? null,
+      syncStatus: type === 'connected' ? 'pending' : null,
     });
 
-    return res.status(201).json(account);
+    if (type !== 'connected') return res.status(201).json(account);
+
+    try {
+      const connection = await brokerSyncClient.provisionConnection({
+        accountId: account.id,
+        userId,
+        platform,
+        brokerServer,
+        brokerLogin,
+      });
+      return res.status(201).json({ ...account.toJSON(), eaApiKey: connection.apiKey });
+    } catch (err) {
+      await brokerSyncClient.revokeConnection(account.id).catch(() => {});
+      await account.destroy();
+      err.status = 502;
+      return next(err);
+    }
   } catch (err) {
     next(err);
   }
@@ -53,6 +77,9 @@ exports.update = async (req, res, next) => {
 
 exports.delete = async (req, res, next) => {
   try {
+    if (req.ownedAccount.type === 'connected') {
+      await brokerSyncClient.revokeConnection(req.ownedAccount.id);
+    }
     await req.ownedAccount.destroy();
     return res.status(204).send();
   } catch (err) {

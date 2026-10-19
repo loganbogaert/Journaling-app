@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../utils/constants';
-import { Account, AccountInput } from '../utils/models';
+import { Account, AccountCreationResponse, AccountInput } from '../utils/models';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
@@ -18,8 +18,8 @@ export class AccountService {
     return this.http.get<Account>(`${this.base}/${id}`);
   }
 
-  create(data: AccountInput): Observable<Account> {
-    return this.http.post<Account>(this.base, data);
+  create(data: AccountInput): Observable<AccountCreationResponse> {
+    return this.http.post<AccountCreationResponse>(this.base, data);
   }
 
   update(id: number, data: Partial<AccountInput>): Observable<Account> {

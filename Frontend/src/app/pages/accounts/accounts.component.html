@@ -1,7 +1,28 @@
 <div class="page form-page">
-  <h1>{{ isEdit ? 'Edit Account' : 'New Account' }}</h1>
+  <ng-container *ngIf="eaApiKey; else accountForm">
+    <h1>Account connected</h1>
+    <p>Copy this EA key now. It will not be shown again.</p>
+    <div class="field">
+      <label for="eaApiKey">EA API key</label>
+      <input id="eaApiKey" type="text" [value]="eaApiKey" readonly />
+    </div>
+    <button type="button" class="btn-secondary" (click)="copyEaApiKey()">
+      {{ copiedKey ? 'Copied' : 'Copy key' }}
+    </button>
+    <p>Trade synchronization will be available after the EA setup phase.</p>
+    <button type="button" (click)="finishProvisioning()">Continue to account</button>
+  </ng-container>
 
-  <form #accountForm="ngForm" (ngSubmit)="accountForm.valid && onSubmit()">
+  <ng-template #accountForm>
+    <h1>{{ isEdit ? 'Edit Account' : 'New Account' }}</h1>
+    <form #accountFormElement="ngForm" (ngSubmit)="accountFormElement.valid && onSubmit()">
+    <div class="field" *ngIf="!isEdit">
+      <label for="type">Account type</label>
+      <select id="type" [(ngModel)]="form.type" name="type">
+        <option value="manual">Manual</option>
+        <option value="connected">Connected</option>
+      </select>
+    </div>
     <div class="field">
       <label for="name">Name</label>
       <input id="name" type="text" [(ngModel)]="form.name" name="name" required />
@@ -14,6 +35,23 @@
       <label for="currency">Currency</label>
       <input id="currency" type="text" [(ngModel)]="form.currency" name="currency" required maxlength="3" />
     </div>
+    <ng-container *ngIf="form.type === 'connected'">
+      <div class="field">
+        <label for="platform">Platform</label>
+        <select id="platform" [(ngModel)]="form.platform" name="platform" required>
+          <option value="mt5">MetaTrader 5</option>
+          <option value="mt4">MetaTrader 4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="brokerLogin">Account login</label>
+        <input id="brokerLogin" type="text" [(ngModel)]="form.brokerLogin" name="brokerLogin" required maxlength="64" />
+      </div>
+      <div class="field">
+        <label for="brokerServer">Broker server</label>
+        <input id="brokerServer" type="text" [(ngModel)]="form.brokerServer" name="brokerServer" required maxlength="255" />
+      </div>
+    </ng-container>
     <div class="field">
       <label for="startDate">Start Date</label>
       <input id="startDate" type="date" [(ngModel)]="form.startDate" name="startDate" />
@@ -24,6 +62,7 @@
     </div>
 
     <p class="error" *ngIf="error">{{ error }}</p>
-    <button type="submit" [disabled]="loading || accountForm.invalid">{{ loading ? 'Saving…' : 'Save' }}</button>
-  </form>
+    <button type="submit" [disabled]="loading || accountFormElement.invalid">{{ loading ? 'Saving…' : 'Save' }}</button>
+    </form>
+  </ng-template>
 </div>

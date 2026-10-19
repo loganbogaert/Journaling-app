@@ -28,12 +28,19 @@ export interface Account {
 }
 
 export interface AccountInput {
-  type?: AccountType;
+  type: AccountType;
   name: string;
   accountBalance: number;
   currency: string;
   startDate?: string | null;
   endDate?: string | null;
+  platform?: 'mt4' | 'mt5';
+  brokerServer?: string;
+  brokerLogin?: string;
+}
+
+export interface AccountCreationResponse extends Account {
+  eaApiKey?: string;
 }
 
 export interface Pair {

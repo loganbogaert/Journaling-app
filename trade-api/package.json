@@ -11,6 +11,7 @@
     "db:migrate:undo:all": "sequelize-cli db:migrate:undo:all"
   },
   "dependencies": {
+    "@trading-journal/shared": "file:../shared",
     "cors": "^2.8.6",
     "dotenv": "^16.3.1",
     "express": "^5.2.1",

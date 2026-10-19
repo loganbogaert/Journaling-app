@@ -1,5 +1,8 @@
 <a [routerLink]="['/accounts', account.id]" class="account-card">
-  <h3>{{ account.name }}</h3>
+  <div class="account-card__heading">
+    <h3>{{ account.name }}</h3>
+    <span class="meta">{{ account.type === 'connected' ? 'Connected' : 'Manual' }}</span>
+  </div>
   <p>{{ account.currency }} · {{ account.accountBalance }}</p>
   <p class="date">{{ formatDate(account.startDate) }} → {{ formatDate(account.endDate) }}</p>
 </a>

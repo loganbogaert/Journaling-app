@@ -70,6 +70,16 @@ services:
             - |
               kong.service.request.set_header("X-Gateway-Secret", os.getenv("KONG_GATEWAY_SECRET"))
 
+  - name: broker-sync-api
+    url: http://broker-sync-api:4000/ingest
+    routes:
+      - name: broker-ingest-route
+        paths:
+          - /broker/ingest
+        methods:
+          - POST
+        strip_path: true
+
   - name: minio
     url: http://minio:9000
     routes:
