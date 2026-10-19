@@ -98,6 +98,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
+      INTERNAL_PORT: 3001
+      INTERNAL_HOST: 0.0.0.0
       HOST: 0.0.0.0
       DB_HOST: postgres
       DB_PORT: 5432
@@ -111,6 +113,8 @@ services:
       KEYCLOAK_ISSUER_URL: http://localhost:8000/auth
       KEYCLOAK_REALM: trading-journal
       KONG_GATEWAY_SECRET: ${KONG_GATEWAY_SECRET}
+    expose:
+      - "3001"
     depends_on:
       postgres:
         condition: service_healthy

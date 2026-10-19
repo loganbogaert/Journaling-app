@@ -6,6 +6,7 @@ A self-hosted web app for tracking trading accounts and trades: log entries, exi
 
 - **Auth** — Keycloak handles user registration/login/tokens; the Angular app redirects to Keycloak's hosted pages instead of implementing its own forms.
 - **Gateway** — Kong is the single public entrypoint: it routes to the frontend, Keycloak, `trade-api` and MinIO, and stamps a shared secret on requests it forwards so `trade-api` can verify they actually came through it.
+- **Service auth** — `trade-api` has a private, non-host-published internal listener. It validates Keycloak service-account tokens (RS256, issuer and audience) and authorizes clients through `trade-api/src/internal/serviceManifest.js`.
 - **Accounts** — group trades under a named trading account with a starting balance and currency; track balance evolution over time with a chart. An account is either `manual` (trades entered by hand) or `connected` (trades synced from a broker — in progress). Owned by a Keycloak user id (`sub` claim), not a local user table.
 - **Trades** — log entry/TP/SL price, direction (long/short), risk, fee, profit and result (win/breakeven/loss) per trade, linked to a currency pair and an account. Manual trades always require TP, SL and risk (enforced by the form, the API, the model and a DB check constraint); synced trades may lack them and their financial fields are read-only.
 - **Pairs** — manage the list of tradable instruments (admin-only to create/delete, via Keycloak's `admin` realm role).
@@ -53,7 +54,12 @@ docker-compose.yml
    ```
    docker compose exec trade-api npm run db:migrate
    ```
-4. The app is served through Kong on `http://localhost:8000`. Keycloak's admin console is reachable directly on `http://localhost:8080` for user/role management (e.g. assigning the `trader` or `admin` realm role to a new user — the `trading-journal` realm, its client and roles are auto-imported from `keycloak/realm-export.json` on first boot).
+4. Provision machine-to-machine clients in an existing Keycloak realm:
+   ```
+   bash keycloak/provision-service-clients.sh
+   ```
+   Set `TRADE_API_CLIENT_SECRET` and `BROKER_SYNC_CLIENT_SECRET` in `.env` first. These clients are also included in `keycloak/realm-export.json` for fresh realm imports.
+5. The app is served through Kong on `http://localhost:8000`. Keycloak's admin console is reachable directly on `http://localhost:8080` for user/role management (e.g. assigning the `trader` or `admin` realm role to a new user — the `trading-journal` realm, its client and roles are auto-imported from `keycloak/realm-export.json` on first boot).
 
 ## Development notes
 
