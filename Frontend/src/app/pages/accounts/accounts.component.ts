@@ -31,6 +31,14 @@ export class AccountsComponent implements OnInit {
     brokerLogin: '',
   };
 
+  get brokerApiBaseUrl(): string {
+    return `${window.location.origin}/broker`;
+  }
+
+  get eaFileName(): string {
+    return `JournalSync.${this.form.platform}`;
+  }
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,

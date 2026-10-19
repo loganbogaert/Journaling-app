@@ -55,6 +55,7 @@ export interface Trade {
   externalDealId?: string | null;
   pairId: number;
   entry: number;
+  exit?: number | null;
   /** Always set on manual trades; may be null on synced trades */
   tp: number | null;
   sl: number | null;

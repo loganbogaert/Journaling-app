@@ -13,6 +13,8 @@ const BrokerConnection = sequelize.define('BrokerConnection', {
   brokerLogin: { type: Sequelize.DataTypes.STRING(64), allowNull: false },
   brokerServer: { type: Sequelize.DataTypes.STRING(255), allowNull: false },
   apiKeyHash: { type: Sequelize.DataTypes.STRING(64), allowNull: false, unique: true },
+  lastDealId: { type: Sequelize.DataTypes.STRING(64), allowNull: true },
+  lastDealTime: { type: Sequelize.DataTypes.DATE, allowNull: true },
   status: {
     type: Sequelize.DataTypes.ENUM('pending', 'active', 'disabled'),
     allowNull: false,

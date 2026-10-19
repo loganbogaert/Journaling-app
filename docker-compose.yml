@@ -135,6 +135,7 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       PORT: 4000
+      BROKER_SYNC_CLIENT_SECRET: ${BROKER_SYNC_CLIENT_SECRET}
       HOST: 0.0.0.0
       DB_HOST: postgres
       DB_PORT: 5432

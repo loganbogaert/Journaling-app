@@ -7,7 +7,7 @@ A self-hosted web app for tracking trading accounts and trades: log entries, exi
 - **Auth** — Keycloak handles user registration/login/tokens; the Angular app redirects to Keycloak's hosted pages instead of implementing its own forms.
 - **Gateway** — Kong is the single public entrypoint: it routes to the frontend, Keycloak, `trade-api` and MinIO, and stamps a shared secret on requests it forwards so `trade-api` can verify they actually came through it.
 - **Service auth** — both APIs use shared Keycloak/Joi/Postgres helpers from `shared/`; each keeps its own service permission manifest.
-- **Connected accounts** — `trade-api` provisions connection records in `broker-sync-api`; the latter stores only a hash of the one-time EA key. Trade ingestion remains disabled until the EA phase.
+- **Connected accounts** — `trade-api` provisions connection records in `broker-sync-api`; the latter stores only a hash of the one-time EA key. MT4/MT5 EAs send closed trades and catch up from the last acknowledged deal when the terminal reconnects.
 - **Accounts** — group trades under a named trading account with a starting balance and currency; track balance evolution over time with a chart. An account is either `manual` (trades entered by hand) or `connected` (trades synced from a broker — in progress). Owned by a Keycloak user id (`sub` claim), not a local user table.
 - **Trades** — log entry/TP/SL price, direction (long/short), risk, fee, profit and result (win/breakeven/loss) per trade, linked to a currency pair and an account. Manual trades always require TP, SL and risk (enforced by the form, the API, the model and a DB check constraint); synced trades may lack them and their financial fields are read-only.
 - **Pairs** — manage the list of tradable instruments (admin-only to create/delete, via Keycloak's `admin` realm role).
@@ -20,6 +20,8 @@ A self-hosted web app for tracking trading accounts and trades: log entries, exi
 - **Gateway**: Kong (DB-less, declarative config)
 - **Identity**: Keycloak
 - **trade-api**: Node.js, Express 5, Sequelize, Joi
+- **broker-sync-api**: Node.js, Express 5, Sequelize, Joi
+- **Shared APIs**: local `shared/` package for JWT verification, service auth, request validation, and Postgres config
 - **Database**: PostgreSQL
 - **Object storage**: MinIO
 - **Deployment**: Docker Compose (kong, keycloak, keycloak-db, trade-api, broker-sync-api, frontend, postgres, minio)
@@ -72,5 +74,6 @@ docker-compose.yml
   docker compose build frontend && docker compose up -d frontend
   ```
 - trade-api migrations live in `trade-api/src/infrastructure/database/migrations`, managed with `sequelize-cli`.
-- `broker-sync-api` uses the same `DB_NAME` as `trade-api` but owns the `broker_sync` PostgreSQL schema and an independent `BrokerSyncMigrations` history table; the service creates the schema with its first migration.
+- `broker-sync-api` uses the same `DB_NAME` as `trade-api` but owns the `broker_sync` PostgreSQL schema and a schema-local `SequelizeMeta` history table; Sequelize CLI creates the schema with its first migration.
+- MT4/MT5 expert advisors live in `broker-sync-api/ea/`. For live sync, allow the public gateway origin in MetaTrader WebRequest settings and use the one-time EA key shown when creating a connected account. The terminal history setting must include the backfill range.
 - The frontend reads its Keycloak config (`KEYCLOAK_URL`, `KEYCLOAK_REALM`, `KEYCLOAK_CLIENT_ID`) from real container env vars at startup, not from the build — `Frontend/docker-entrypoint.d/40-generate-env.sh` renders `public/env.template.js` into `env.js` (loaded by `index.html` before the Angular bundle) using whatever values are set on the `frontend` service in `docker-compose.yml`. Change them there and restart the container; no rebuild needed.

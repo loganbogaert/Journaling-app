@@ -9,7 +9,14 @@
     <button type="button" class="btn-secondary" (click)="copyEaApiKey()">
       {{ copiedKey ? 'Copied' : 'Copy key' }}
     </button>
-    <p>Trade synchronization will be available after the EA setup phase.</p>
+    <ol>
+      <li>Compile <code>broker-sync-api/ea/{{ eaFileName }}</code> in MetaEditor and attach it to a chart.</li>
+      <li>In MetaTrader, allow WebRequest to <code>{{ brokerApiBaseUrl }}</code>.</li>
+      <li>Set the EA's API URL to <code>{{ brokerApiBaseUrl }}</code> and paste the key above into <code>AccountApiKey</code>.</li>
+      <li>For the first backfill, set the terminal's account history to All History. The EA catches up after reconnects.</li>
+    </ol>
+    <p>The EA only reads closed trades. Keep the terminal running for live sync.</p>
+    <p class="error" *ngIf="error">{{ error }}</p>
     <button type="button" (click)="finishProvisioning()">Continue to account</button>
   </ng-container>
 

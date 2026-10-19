@@ -80,6 +80,16 @@ services:
           - POST
         strip_path: true
 
+  - name: broker-sync-cursor
+    url: http://broker-sync-api:4000/cursor
+    routes:
+      - name: broker-cursor-route
+        paths:
+          - /broker/cursor
+        methods:
+          - GET
+        strip_path: true
+
   - name: minio
     url: http://minio:9000
     routes:

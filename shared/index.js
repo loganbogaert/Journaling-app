@@ -87,9 +87,54 @@ function createDatabaseConfig() {
   };
 }
 
+function createServiceClient({ baseUrl, keycloakUrl, realm, clientId, clientSecret }) {
+  let cachedToken;
+  let tokenExpiresAt = 0;
+
+  async function getToken() {
+    if (cachedToken && tokenExpiresAt > Date.now() + 30_000) return cachedToken;
+
+    const body = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+    const response = await fetch(`${keycloakUrl}/realms/${realm}/protocol/openid-connect/token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    if (!response.ok) throw new Error(`Keycloak service-token request failed (${response.status})`);
+
+    const token = await response.json();
+    cachedToken = token.access_token;
+    tokenExpiresAt = Date.now() + token.expires_in * 1000;
+    return cachedToken;
+  }
+
+  return {
+    async request(path, options = {}) {
+      const token = await getToken();
+      const response = await fetch(`${baseUrl}${path}`, {
+        ...options,
+        headers: {
+          authorization: `Bearer ${token}`,
+          ...(options.body ? { 'content-type': 'application/json' } : {}),
+          ...options.headers,
+        },
+      });
+      if (response.status === 204) return null;
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(`Service request failed (${response.status}): ${body.message || 'unknown error'}`);
+      return body;
+    },
+  };
+}
+
 module.exports = {
   createDatabaseConfig,
   createKeycloakTokenVerifier,
+  createServiceClient,
   createServiceAuth,
   validate,
 };

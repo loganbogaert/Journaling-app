@@ -28,6 +28,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL(10, 4),
       allowNull: false,
     },
+    exit: {
+      type: DataTypes.DECIMAL(10, 4),
+      allowNull: true,
+    },
     tp: {
       type: DataTypes.DECIMAL(10, 4),
       allowNull: true,
