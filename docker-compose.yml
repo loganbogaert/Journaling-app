@@ -88,11 +88,11 @@ services:
       keycloak-db:
         condition: service_healthy
 
-  backend:
+  trade-api:
     build:
-      context: ./Backend
+      context: ./trade-api
       dockerfile: Dockerfile
-    container_name: trading_journal_backend
+    container_name: trading_journal_trade_api
     restart: unless-stopped
     env_file: .env
     environment:
@@ -130,7 +130,7 @@ services:
       KEYCLOAK_REALM: trading-journal
       KEYCLOAK_CLIENT_ID: trading-journal-frontend
     depends_on:
-      - backend
+      - trade-api
 
   kong:
     image: kong:3.6
@@ -156,7 +156,7 @@ services:
       - "8443:8443"
     depends_on:
       - frontend
-      - backend
+      - trade-api
       - keycloak
       - minio
 

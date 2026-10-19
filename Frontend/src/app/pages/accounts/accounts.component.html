@@ -1,0 +1,29 @@
+<div class="page form-page">
+  <h1>{{ isEdit ? 'Edit Account' : 'New Account' }}</h1>
+
+  <form #accountForm="ngForm" (ngSubmit)="accountForm.valid && onSubmit()">
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" type="text" [(ngModel)]="form.name" name="name" required />
+    </div>
+    <div class="field">
+      <label for="balance">Account Balance</label>
+      <input id="balance" type="number" [(ngModel)]="form.accountBalance" name="accountBalance" required min="0" />
+    </div>
+    <div class="field">
+      <label for="currency">Currency</label>
+      <input id="currency" type="text" [(ngModel)]="form.currency" name="currency" required maxlength="3" />
+    </div>
+    <div class="field">
+      <label for="startDate">Start Date</label>
+      <input id="startDate" type="date" [(ngModel)]="form.startDate" name="startDate" />
+    </div>
+    <div class="field">
+      <label for="endDate">End Date</label>
+      <input id="endDate" type="date" [(ngModel)]="form.endDate" name="endDate" />
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <button type="submit" [disabled]="loading || accountForm.invalid">{{ loading ? 'Saving…' : 'Save' }}</button>
+  </form>
+</div>

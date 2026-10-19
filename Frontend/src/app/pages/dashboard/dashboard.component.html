@@ -1,17 +1,17 @@
 <div class="page">
   <header class="page-header">
     <h1>Dashboard</h1>
-    <a routerLink="/sessions/new" class="btn-primary">+ New Session</a>
+    <a routerLink="/accounts/new" class="btn-primary">+ New Account</a>
   </header>
 
   <p *ngIf="loading">Loading…</p>
   <p class="error" *ngIf="error">{{ error }}</p>
 
-  <div class="session-grid" *ngIf="!loading && !error">
-    <app-session-card
-      *ngFor="let session of sessions"
-      [session]="session">
-    </app-session-card>
-    <p *ngIf="sessions.length === 0">No sessions yet. Create your first one!</p>
+  <div class="account-grid" *ngIf="!loading && !error">
+    <app-account-card
+      *ngFor="let account of accounts"
+      [account]="account">
+    </app-account-card>
+    <p *ngIf="accounts.length === 0">No accounts yet. Create your first one!</p>
   </div>
 </div>

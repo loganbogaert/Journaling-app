@@ -1,0 +1,67 @@
+<div class="page" *ngIf="!loading && account">
+  <header class="page-header">
+    <div>
+      <h1>{{ account.name }}</h1>
+      <span class="meta">
+        {{ account.currency }} · Initial: {{ formatDecimal(account.accountBalance) }}
+        <ng-container *ngIf="trades.length > 0">
+          → Current: {{ formatDecimal(currentBalance) }}
+          <span class="pct" [class.positive]="currentBalancePercent >= 0" [class.negative]="currentBalancePercent < 0">
+            ({{ currentBalancePercent >= 0 ? '+' : '' }}{{ formatDecimal(currentBalancePercent) }}%)
+          </span>
+        </ng-container>
+      </span>
+    </div>
+    <div class="actions">
+      <a [routerLink]="['/accounts', account.id, 'edit']" class="btn-secondary">Edit</a>
+      <button (click)="deleteAccount()" class="btn-danger">Delete</button>
+      <a [routerLink]="['/accounts', account.id, 'trades', 'new']" class="btn-primary">+ New Trade</a>
+    </div>
+  </header>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <app-account-balance-chart
+    [balanceHistory]="balanceHistory"
+    [currency]="account.currency">
+  </app-account-balance-chart>
+
+  <div class="trade-stats" *ngIf="metrics">
+    <div class="trade-stat">
+      <span class="trade-stat__label">Total Trades</span>
+      <span class="trade-stat__value">{{ metrics.totalTrades }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Wins</span>
+      <span class="trade-stat__value">{{ metrics.winningTrades }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Losses</span>
+      <span class="trade-stat__value">{{ metrics.losingTrades }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Breakeven</span>
+      <span class="trade-stat__value">{{ metrics.breakevenTrades }}</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Winrate</span>
+      <span class="trade-stat__value">{{ formatDecimal(metrics.winrate) }}%</span>
+    </div>
+    <div class="trade-stat">
+      <span class="trade-stat__label">Avg R:R</span>
+      <span class="trade-stat__value">{{ formatDecimal(metrics.averageRiskReward) }}</span>
+    </div>
+  </div>
+
+  <section class="trades-section">
+    <h2>Trades</h2>
+    <app-trade-card
+      *ngFor="let trade of trades"
+      [trade]="trade">
+    </app-trade-card>
+    <p *ngIf="trades.length === 0">No trades in this account yet.</p>
+  </section>
+</div>
+
+<p *ngIf="loading">Loading…</p>
+<p class="error" *ngIf="error && !loading">{{ error }}</p>

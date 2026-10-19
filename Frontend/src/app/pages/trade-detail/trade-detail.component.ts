@@ -19,7 +19,7 @@ export class TradeDetailComponent implements OnInit {
   trade: Trade | null = null;
   pairs: Pair[] = [];
   pictures: ImageEntry[] = [];
-  sessionTrades: Trade[] = [];
+  accountTrades: Trade[] = [];
   loading = true;
   uploading = false;
   error = '';
@@ -59,16 +59,16 @@ export class TradeDetailComponent implements OnInit {
       images: this.imageService.getViewUrls(tradeId),
     }).pipe(
       switchMap(({ trade, pairs, images }) =>
-        this.tradeService.getBySession(trade.sessionId).pipe(
-          map((sessionData) => ({ trade, pairs, images, sessionTrades: sessionData.trades }))
+        this.tradeService.getByAccount(trade.accountId).pipe(
+          map((accountData) => ({ trade, pairs, images, accountTrades: accountData.trades }))
         )
       )
     ).subscribe({
-      next: ({ trade, pairs, images, sessionTrades }) => {
+      next: ({ trade, pairs, images, accountTrades }) => {
         this.trade = trade;
         this.pairs = pairs;
         this.pictures = images.urls;
-        this.sessionTrades = sessionTrades;
+        this.accountTrades = accountTrades;
         this.loading = false;
       },
       error: (err) => {
@@ -79,17 +79,17 @@ export class TradeDetailComponent implements OnInit {
   }
 
   private get currentTradeIndex(): number {
-    return this.trade ? this.sessionTrades.findIndex((t) => t.id === this.trade!.id) : -1;
+    return this.trade ? this.accountTrades.findIndex((t) => t.id === this.trade!.id) : -1;
   }
 
   get previousTrade(): Trade | null {
     const idx = this.currentTradeIndex;
-    return idx > 0 ? this.sessionTrades[idx - 1] : null;
+    return idx > 0 ? this.accountTrades[idx - 1] : null;
   }
 
   get nextTrade(): Trade | null {
     const idx = this.currentTradeIndex;
-    return idx >= 0 && idx < this.sessionTrades.length - 1 ? this.sessionTrades[idx + 1] : null;
+    return idx >= 0 && idx < this.accountTrades.length - 1 ? this.accountTrades[idx + 1] : null;
   }
 
   goToPreviousTrade(): void {
@@ -163,7 +163,7 @@ export class TradeDetailComponent implements OnInit {
   deleteTrade(): void {
     if (!this.trade) return;
     this.tradeService.delete(this.trade.id).subscribe({
-      next: () => this.router.navigate(['/sessions', this.trade!.sessionId]),
+      next: () => this.router.navigate(['/accounts', this.trade!.accountId]),
     });
   }
 }

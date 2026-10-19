@@ -12,7 +12,7 @@
       <span class="meta">{{ formatDate(trade.entryDate) }} → {{ formatDate(trade.exitDate) }}</span>
     </div>
     <div class="actions">
-      <a [routerLink]="['/sessions', trade.sessionId]" class="btn-secondary">← Back to Session</a>
+      <a [routerLink]="['/accounts', trade.accountId]" class="btn-secondary">← Back to Account</a>
       <a [routerLink]="['/trades', trade.id, 'edit']" class="btn-secondary">Edit</a>
       <button (click)="deleteTrade()" class="btn-danger">Delete</button>
     </div>

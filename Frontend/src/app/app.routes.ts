@@ -20,25 +20,25 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
-    path: 'sessions/new',
+    path: 'accounts/new',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/sessions/sessions.component').then((m) => m.SessionsComponent),
+      import('./pages/accounts/accounts.component').then((m) => m.AccountsComponent),
   },
   {
-    path: 'sessions/:id',
+    path: 'accounts/:id',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/session-detail/session-detail.component').then((m) => m.SessionDetailComponent),
+      import('./pages/account-detail/account-detail.component').then((m) => m.AccountDetailComponent),
   },
   {
-    path: 'sessions/:id/edit',
+    path: 'accounts/:id/edit',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/sessions/sessions.component').then((m) => m.SessionsComponent),
+      import('./pages/accounts/accounts.component').then((m) => m.AccountsComponent),
   },
   {
-    path: 'sessions/:sessionId/trades/new',
+    path: 'accounts/:accountId/trades/new',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/trades/trades.component').then((m) => m.TradesComponent),
