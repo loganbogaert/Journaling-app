@@ -12,7 +12,12 @@ const BrokerConnection = sequelize.define('BrokerConnection', {
   platform: { type: Sequelize.DataTypes.ENUM('mt4', 'mt5'), allowNull: false },
   brokerLogin: { type: Sequelize.DataTypes.STRING(64), allowNull: false },
   brokerServer: { type: Sequelize.DataTypes.STRING(255), allowNull: false },
-  apiKeyHash: { type: Sequelize.DataTypes.STRING(64), allowNull: false, unique: true },
+  encryptedPassword: { type: Sequelize.DataTypes.TEXT, allowNull: true },
+  metaApiAccountId: { type: Sequelize.DataTypes.STRING, allowNull: true },
+  syncedThrough: { type: Sequelize.DataTypes.DATE, allowNull: true },
+  syncState: { type: Sequelize.DataTypes.STRING, allowNull: false, defaultValue: 'idle' },
+  syncError: { type: Sequelize.DataTypes.STRING, allowNull: true },
+  syncResult: { type: Sequelize.DataTypes.JSONB, allowNull: true },
   lastDealId: { type: Sequelize.DataTypes.STRING(64), allowNull: true },
   lastDealTime: { type: Sequelize.DataTypes.DATE, allowNull: true },
   status: {
@@ -22,4 +27,9 @@ const BrokerConnection = sequelize.define('BrokerConnection', {
   },
 }, { tableName: 'BrokerConnections', schema: 'broker_sync' });
 
-module.exports = { BrokerConnection, sequelize, Sequelize };
+const ImportedDeal = sequelize.define('ImportedDeal', {
+  accountId: { type: Sequelize.DataTypes.INTEGER, primaryKey: true },
+  externalDealId: { type: Sequelize.DataTypes.STRING(64), primaryKey: true },
+}, { schema: 'broker_sync', tableName: 'ImportedDeals' });
+
+module.exports = { BrokerConnection, ImportedDeal, sequelize, Sequelize };

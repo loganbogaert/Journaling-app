@@ -37,10 +37,18 @@ export interface AccountInput {
   platform?: 'mt4' | 'mt5';
   brokerServer?: string;
   brokerLogin?: string;
+  investorPassword?: string;
 }
 
 export interface AccountCreationResponse extends Account {
-  eaApiKey?: string;
+}
+
+export interface BrokerSyncStatus {
+  state: 'idle' | 'syncing' | 'succeeded' | 'failed';
+  error: string | null;
+  result: { imported: number; skipped: number } | null;
+  lastSyncedAt: string | null;
+  credentialsRequired: boolean;
 }
 
 export type ScreenshotTimeframe = 'M1' | 'M5' | 'M15' | 'M30' | 'H1' | 'H4' | 'D1';

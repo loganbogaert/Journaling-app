@@ -13,13 +13,16 @@
       </span>
     </div>
     <div class="actions">
+      <button *ngIf="account.type === 'connected'" (click)="syncNow()" [disabled]="syncing" class="btn-primary">{{ syncing ? 'Syncing...' : 'Sync now' }}</button>
       <a [routerLink]="['/accounts', account.id, 'edit']" class="btn-secondary">Edit</a>
       <button (click)="deleteAccount()" class="btn-danger">Delete</button>
-      <a [routerLink]="['/accounts', account.id, 'trades', 'new']" class="btn-primary">+ New Trade</a>
+      <a *ngIf="account.type === 'manual'" [routerLink]="['/accounts', account.id, 'trades', 'new']" class="btn-primary">+ New Trade</a>
     </div>
   </header>
 
   <p class="error" *ngIf="error">{{ error }}</p>
+  <p role="status" *ngIf="syncMessage">{{ syncMessage }}</p>
+  <p class="meta" *ngIf="account.lastSyncedAt">Last synced: {{ formatDate(account.lastSyncedAt) }}</p>
 
   <app-account-balance-chart
     [balanceHistory]="balanceHistory"

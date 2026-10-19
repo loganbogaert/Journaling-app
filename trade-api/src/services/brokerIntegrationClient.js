@@ -14,6 +14,9 @@ exports.provisionConnection = (connection) => client.request('/internal/connecti
   body: JSON.stringify(connection),
 });
 
+exports.startSync = (accountId) => client.request(`/internal/connections/${accountId}/sync`, { method: 'POST' });
+exports.syncStatus = (accountId) => client.request(`/internal/connections/${accountId}/sync`);
+
 exports.revokeConnection = (accountId) => client.request(`/internal/connections/${accountId}`, {
   method: 'DELETE',
 });

@@ -125,7 +125,11 @@ function createServiceClient({ baseUrl, keycloakUrl, realm, clientId, clientSecr
       });
       if (response.status === 204) return null;
       const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(`Service request failed (${response.status}): ${body.message || 'unknown error'}`);
+      if (!response.ok) {
+        const error = new Error(body.message || `Service request failed (${response.status})`);
+        error.status = response.status;
+        throw error;
+      }
       return body;
     },
   };

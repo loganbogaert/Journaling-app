@@ -1,26 +1,4 @@
 <div class="page form-page">
-  <ng-container *ngIf="eaApiKey; else accountForm">
-    <h1>Account connected</h1>
-    <p>Copy this EA key now. It will not be shown again.</p>
-    <div class="field">
-      <label for="eaApiKey">EA API key</label>
-      <input id="eaApiKey" type="text" [value]="eaApiKey" readonly />
-    </div>
-    <button type="button" class="btn-secondary" (click)="copyEaApiKey()">
-      {{ copiedKey ? 'Copied' : 'Copy key' }}
-    </button>
-    <ol>
-      <li>Compile <code>broker-integration-api/ea/{{ eaFileName }}</code> in MetaEditor and attach it to a chart.</li>
-      <li>In MetaTrader, allow WebRequest to <code>{{ brokerApiBaseUrl }}</code>.</li>
-      <li>Set the EA's API URL to <code>{{ brokerApiBaseUrl }}</code> and paste the key above into <code>AccountApiKey</code>.</li>
-      <li>For the first backfill, set the terminal's account history to All History. The EA catches up after reconnects.</li>
-    </ol>
-    <p>The EA only reads closed trades. Keep the terminal running for live sync.</p>
-    <p class="error" *ngIf="error">{{ error }}</p>
-    <button type="button" (click)="finishProvisioning()">Continue to account</button>
-  </ng-container>
-
-  <ng-template #accountForm>
     <h1>{{ isEdit ? 'Edit Account' : 'New Account' }}</h1>
     <form #accountFormElement="ngForm" (ngSubmit)="accountFormElement.valid && onSubmit()">
     <div class="field" *ngIf="!isEdit">
@@ -45,18 +23,22 @@
     <ng-container *ngIf="form.type === 'connected'">
       <div class="field">
         <label for="platform">Platform</label>
-        <select id="platform" [(ngModel)]="form.platform" name="platform" required>
+        <select id="platform" [(ngModel)]="form.platform" name="platform" required [disabled]="isEdit">
           <option value="mt5">MetaTrader 5</option>
           <option value="mt4">MetaTrader 4</option>
         </select>
       </div>
       <div class="field">
         <label for="brokerLogin">Account login</label>
-        <input id="brokerLogin" type="text" [(ngModel)]="form.brokerLogin" name="brokerLogin" required maxlength="64" />
+        <input id="brokerLogin" type="text" [(ngModel)]="form.brokerLogin" name="brokerLogin" required maxlength="64" [readonly]="isEdit" />
       </div>
       <div class="field">
         <label for="brokerServer">Broker server</label>
-        <input id="brokerServer" type="text" [(ngModel)]="form.brokerServer" name="brokerServer" required maxlength="255" />
+        <input id="brokerServer" type="text" [(ngModel)]="form.brokerServer" name="brokerServer" required maxlength="255" [readonly]="isEdit" />
+      </div>
+      <div class="field">
+        <label for="investorPassword">{{ isEdit ? 'Replace investor password (optional)' : 'Investor password' }}</label>
+        <input id="investorPassword" type="password" [(ngModel)]="form.investorPassword" name="investorPassword" [required]="!isEdit" maxlength="256" autocomplete="new-password" />
       </div>
     </ng-container>
     <div class="field">
@@ -71,5 +53,4 @@
     <p class="error" *ngIf="error">{{ error }}</p>
     <button type="submit" [disabled]="loading || accountFormElement.invalid">{{ loading ? 'Saving…' : 'Save' }}</button>
     </form>
-  </ng-template>
 </div>

@@ -34,6 +34,9 @@ exports.createAccount = Joi.object({
     then: Joi.string().trim().min(1).max(64).required(),
     otherwise: Joi.forbidden(),
   }),
+  investorPassword: Joi.when('type', {
+    is: 'connected', then: Joi.string().min(1).max(256).required(), otherwise: Joi.forbidden(),
+  }),
 });
 
-exports.updateAccount = Joi.object(fields).min(1);
+exports.updateAccount = Joi.object({ ...fields, investorPassword: Joi.string().min(1).max(256) }).min(1);

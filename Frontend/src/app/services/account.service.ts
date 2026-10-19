@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../utils/constants';
-import { Account, AccountCreationResponse, AccountInput } from '../utils/models';
+import { Account, AccountCreationResponse, AccountInput, BrokerSyncStatus } from '../utils/models';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
@@ -28,5 +28,13 @@ export class AccountService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  sync(id: number): Observable<BrokerSyncStatus> {
+    return this.http.post<BrokerSyncStatus>(`${this.base}/${id}/sync`, {});
+  }
+
+  syncStatus(id: number): Observable<BrokerSyncStatus> {
+    return this.http.get<BrokerSyncStatus>(`${this.base}/${id}/sync`);
   }
 }

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AccountService } from '../../services/account.service';
-import { Account, AccountCreationResponse, AccountInput } from '../../utils/models';
+import { Account, AccountInput } from '../../utils/models';
 
 @Component({
   selector: 'app-accounts',
@@ -16,8 +16,6 @@ export class AccountsComponent implements OnInit {
   accountId: number | null = null;
   loading = false;
   error = '';
-  eaApiKey = '';
-  copiedKey = false;
 
   form = {
     type: 'manual' as 'manual' | 'connected',
@@ -29,15 +27,8 @@ export class AccountsComponent implements OnInit {
     platform: 'mt5' as 'mt4' | 'mt5',
     brokerServer: '',
     brokerLogin: '',
+    investorPassword: '',
   };
-
-  get brokerApiBaseUrl(): string {
-    return `${window.location.origin}/broker`;
-  }
-
-  get eaFileName(): string {
-    return `JournalSync.${this.form.platform}`;
-  }
 
   constructor(
     private route: ActivatedRoute,
@@ -54,6 +45,10 @@ export class AccountsComponent implements OnInit {
     if (this.isEdit && this.accountId) {
       this.accountService.getById(this.accountId).subscribe({
         next: (a: Account) => {
+          this.form.type = a.type;
+          this.form.platform = a.platform || 'mt5';
+          this.form.brokerLogin = a.brokerLogin || '';
+          this.form.brokerServer = a.brokerServer || '';
           this.form.name = a.name;
           this.form.accountBalance = Number(a.accountBalance);
           this.form.currency = a.currency;
@@ -75,10 +70,13 @@ export class AccountsComponent implements OnInit {
       startDate: this.form.startDate || null,
       endDate: this.form.endDate || null,
     };
-    if (payload.type === 'connected') {
+    if (payload.type === 'connected' && !this.isEdit) {
       payload.platform = this.form.platform;
       payload.brokerServer = this.form.brokerServer.trim();
       payload.brokerLogin = this.form.brokerLogin.trim();
+    }
+    if (this.form.type === 'connected' && this.form.investorPassword) {
+      payload.investorPassword = this.form.investorPassword;
     }
 
     const request = this.isEdit && this.accountId
@@ -87,18 +85,7 @@ export class AccountsComponent implements OnInit {
 
     request.subscribe({
       next: (account) => {
-        if (!this.isEdit && account.type === 'connected') {
-          const eaApiKey = (account as AccountCreationResponse).eaApiKey;
-          if (!eaApiKey) {
-            this.error = 'The account was created, but no EA key was returned. Contact support before retrying.';
-            this.loading = false;
-            return;
-          }
-          this.accountId = account.id;
-          this.eaApiKey = eaApiKey;
-          this.loading = false;
-          return;
-        }
+        this.form.investorPassword = '';
         this.router.navigate(['/accounts', account.id]);
       },
       error: (err: { error?: { message?: string } }) => {
@@ -108,16 +95,4 @@ export class AccountsComponent implements OnInit {
     });
   }
 
-  async copyEaApiKey(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(this.eaApiKey);
-      this.copiedKey = true;
-    } catch {
-      this.error = 'Could not copy the key. Select and copy it manually.';
-    }
-  }
-
-  finishProvisioning(): void {
-    if (this.accountId) this.router.navigate(['/accounts', this.accountId]);
-  }
 }
