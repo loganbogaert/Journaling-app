@@ -2,11 +2,11 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-COPY broker-sync-api/package*.json ./
+COPY broker-integration-api/package*.json ./
 COPY shared /shared
 RUN npm ci
 
-COPY broker-sync-api/ ./
+COPY broker-integration-api/ ./
 RUN chmod +x entrypoint.sh
 
 EXPOSE 4000

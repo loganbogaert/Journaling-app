@@ -20,6 +20,12 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
+    path: 'settings/screenshots',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/screenshot-settings/screenshot-settings.component').then((m) => m.ScreenshotSettingsComponent),
+  },
+  {
     path: 'accounts/new',
     canActivate: [authGuard],
     loadComponent: () =>

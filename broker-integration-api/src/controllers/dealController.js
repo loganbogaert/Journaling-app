@@ -1,6 +1,7 @@
 'use strict';
 
 const tradeApiClient = require('../services/tradeApiClient');
+const { renderCandlestickChart } = require('../services/chartRenderer');
 
 function compareDealIds(left, right) {
   if (/^\d+$/.test(left) && /^\d+$/.test(right)) {
@@ -11,12 +12,19 @@ function compareDealIds(left, right) {
   return left.localeCompare(right);
 }
 
-exports.getCursor = (req, res) => {
-  const connection = req.brokerConnection;
-  return res.status(200).json({
-    lastDealId: connection.lastDealId,
-    lastDealTime: connection.lastDealTime ? Math.floor(connection.lastDealTime.getTime() / 1000) : null,
-  });
+exports.getCursor = async (req, res, next) => {
+  try {
+    const connection = req.brokerConnection;
+    const settings = await tradeApiClient.getScreenshotSettings(connection.accountId);
+    return res.status(200).json({
+      lastDealId: connection.lastDealId,
+      lastDealTime: connection.lastDealTime ? Math.floor(connection.lastDealTime.getTime() / 1000) : null,
+      timeframes: settings.timeframes,
+      candleCount: settings.candleCount,
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.ingest = async (req, res, next) => {
@@ -27,6 +35,25 @@ exports.ingest = async (req, res, next) => {
       accountId: connection.accountId,
       ...deal,
     });
+
+    const settings = await tradeApiClient.getScreenshotSettings(connection.accountId);
+    for (const timeframe of settings.timeframes) {
+      const candles = deal.candles?.[timeframe];
+      if (!candles?.length) throw new Error(`Missing candle payload for ${timeframe}`);
+
+      const png = renderCandlestickChart({
+        symbol: deal.symbol,
+        timeframe,
+        candles,
+        entry: deal.entry,
+        exit: deal.exit,
+      });
+      await tradeApiClient.storeScreenshot(trade.trade.id, {
+        externalDealId: deal.externalDealId,
+        timeframe,
+        imageBase64: png.toString('base64'),
+      });
+    }
 
     const incomingTime = new Date(cursorTime * 1000);
     const previousTime = connection.lastDealTime ? new Date(connection.lastDealTime) : null;

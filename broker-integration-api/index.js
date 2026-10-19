@@ -14,6 +14,6 @@ sequelize.authenticate()
     app.listen(port, host, () => console.log(`Broker sync API running on http://${host}:${port}`));
   })
   .catch((err) => {
-    console.error('Failed to start broker-sync-api:', err);
+    console.error('Failed to start broker-integration-api:', err);
     process.exit(1);
   });

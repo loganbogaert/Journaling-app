@@ -9,6 +9,8 @@ input int PollSeconds = 30;
 long g_lastDealId = -1;
 datetime g_lastDealTime = 0;
 bool g_ready = false;
+string g_timeframes[];
+int g_candleCount = 300;
 
 string FullUrl(const string path)
 {
@@ -47,6 +49,29 @@ string JsonValue(const string json, const string name)
    return StringSubstr(json, pos, end - pos);
 }
 
+bool JsonStringArray(const string json, const string name, string &values[])
+{
+   int pos = StringFind(json, "\"" + name + "\"");
+   if(pos < 0) return false;
+   pos = StringFind(json, "[", pos);
+   if(pos < 0) return false;
+   ArrayResize(values, 0);
+   for(pos++; pos < StringLen(json); pos++)
+   {
+      ushort ch = StringGetCharacter(json, pos);
+      if(ch == ']') return ArraySize(values) > 0;
+      if(ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == ',') continue;
+      if(ch != '"') return false;
+      int end = StringFind(json, "\"", pos + 1);
+      if(end < 0) return false;
+      int size = ArraySize(values);
+      ArrayResize(values, size + 1);
+      values[size] = StringSubstr(json, pos + 1, end - pos - 1);
+      pos = end;
+   }
+   return false;
+}
+
 int Request(const string method, const string path, const string payload, string &response)
 {
    char data[];
@@ -82,8 +107,63 @@ bool FetchCursor()
    }
    string id = JsonValue(response, "lastDealId");
    string time = JsonValue(response, "lastDealTime");
+   string count = JsonValue(response, "candleCount");
+   if(!JsonStringArray(response, "timeframes", g_timeframes)) return false;
+   g_candleCount = (int)StringToInteger(count);
+   if(g_candleCount < 50 || g_candleCount > 500) return false;
    g_lastDealId = id == "" ? -1 : StringToInteger(id);
    g_lastDealTime = time == "" ? 0 : (datetime)StringToInteger(time);
+   return true;
+}
+
+ENUM_TIMEFRAMES TimeframeFromName(const string name)
+{
+   if(name == "M1") return PERIOD_M1;
+   if(name == "M5") return PERIOD_M5;
+   if(name == "M15") return PERIOD_M15;
+   if(name == "M30") return PERIOD_M30;
+   if(name == "H1") return PERIOD_H1;
+   if(name == "H4") return PERIOD_H4;
+   return PERIOD_D1;
+}
+
+bool AppendCandlesForTimeframe(const string symbol, const string name, const datetime exitTime, string &payload)
+{
+   MqlRates rates[];
+   ArraySetAsSeries(rates, false);
+   int copied = CopyRates(symbol, TimeframeFromName(name), exitTime, g_candleCount, rates);
+   if(copied <= 0) return false;
+
+   int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
+   int offset = (int)(TimeTradeServer() - TimeGMT());
+   payload += "\"" + name + "\":[";
+   for(int index = 0; index < copied; index++)
+   {
+      if(index > 0) payload += ",";
+      payload += "{\"time\":" + IntegerToString((long)(rates[index].time - offset));
+      payload += ",\"open\":" + DoubleToString(rates[index].open, digits);
+      payload += ",\"high\":" + DoubleToString(rates[index].high, digits);
+      payload += ",\"low\":" + DoubleToString(rates[index].low, digits);
+      payload += ",\"close\":" + DoubleToString(rates[index].close, digits);
+      payload += ",\"volume\":" + IntegerToString((long)rates[index].tick_volume) + "}";
+   }
+   payload += "]";
+   return true;
+}
+
+bool AppendConfiguredCandles(const string symbol, const datetime exitTime, string &payload)
+{
+   payload += ",\"candles\":{";
+   for(int index = 0; index < ArraySize(g_timeframes); index++)
+   {
+      if(index > 0) payload += ",";
+      if(!AppendCandlesForTimeframe(symbol, g_timeframes[index], exitTime, payload))
+      {
+         Print("JournalSync candle history unavailable for ", symbol, " ", g_timeframes[index]);
+         return false;
+      }
+   }
+   payload += "}";
    return true;
 }
 
@@ -187,7 +267,9 @@ bool SendClosedDeal(const ulong ticket)
    payload += "\"risk\":" + riskJson + ",";
    payload += "\"fee\":" + DoubleToString(-(commission + swap), 2) + ",";
    payload += "\"profit\":" + DoubleToString(profit, 2) + ",";
-   payload += "\"result\":\"" + result + "\"}";
+   payload += "\"result\":\"" + result + "\"";
+   if(!AppendConfiguredCandles(symbol, exitTime, payload)) return false;
+   payload += "}";
 
    string response;
    int status = Request("POST", "/ingest", payload, response);
@@ -251,11 +333,15 @@ void OnDeinit(const int reason)
 
 void OnTimer()
 {
-   if(!g_ready) g_ready = FetchCursor();
-   SyncHistory();
+   g_ready = FetchCursor();
+   if(g_ready) SyncHistory();
 }
 
 void OnTradeTransaction(const MqlTradeTransaction &transaction, const MqlTradeRequest &request, const MqlTradeResult &result)
 {
-   if(transaction.type == TRADE_TRANSACTION_DEAL_ADD) SyncHistory();
+   if(transaction.type == TRADE_TRANSACTION_DEAL_ADD)
+   {
+      if(!g_ready) g_ready = FetchCursor();
+      if(g_ready) SyncHistory();
+   }
 }

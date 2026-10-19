@@ -70,8 +70,8 @@ services:
             - |
               kong.service.request.set_header("X-Gateway-Secret", os.getenv("KONG_GATEWAY_SECRET"))
 
-  - name: broker-sync-api
-    url: http://broker-sync-api:4000/ingest
+  - name: broker-integration-api
+    url: http://broker-integration-api:4000/ingest
     routes:
       - name: broker-ingest-route
         paths:
@@ -81,7 +81,7 @@ services:
         strip_path: true
 
   - name: broker-sync-cursor
-    url: http://broker-sync-api:4000/cursor
+    url: http://broker-integration-api:4000/cursor
     routes:
       - name: broker-cursor-route
         paths:

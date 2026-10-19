@@ -9,6 +9,8 @@ input int PollSeconds = 30;
 long g_lastDealId = -1;
 datetime g_lastDealTime = 0;
 bool g_ready = false;
+string g_timeframes[];
+int g_candleCount = 300;
 
 string FullUrl(const string path)
 {
@@ -47,6 +49,29 @@ string JsonValue(const string json, const string name)
    return StringSubstr(json, pos, end - pos);
 }
 
+bool JsonStringArray(const string json, const string name, string &values[])
+{
+   int pos = StringFind(json, "\"" + name + "\"");
+   if(pos < 0) return false;
+   pos = StringFind(json, "[", pos);
+   if(pos < 0) return false;
+   ArrayResize(values, 0);
+   for(pos++; pos < StringLen(json); pos++)
+   {
+      ushort ch = StringGetCharacter(json, pos);
+      if(ch == ']') return ArraySize(values) > 0;
+      if(ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n' || ch == ',') continue;
+      if(ch != '"') return false;
+      int end = StringFind(json, "\"", pos + 1);
+      if(end < 0) return false;
+      int size = ArraySize(values);
+      ArrayResize(values, size + 1);
+      values[size] = StringSubstr(json, pos + 1, end - pos - 1);
+      pos = end;
+   }
+   return false;
+}
+
 int Request(const string method, const string path, const string payload, string &response)
 {
    char data[];
@@ -82,8 +107,68 @@ bool FetchCursor()
    }
    string id = JsonValue(response, "lastDealId");
    string time = JsonValue(response, "lastDealTime");
+   string count = JsonValue(response, "candleCount");
+   if(!JsonStringArray(response, "timeframes", g_timeframes)) return false;
+   g_candleCount = (int)StringToInteger(count);
+   if(g_candleCount < 50 || g_candleCount > 500) return false;
    g_lastDealId = id == "" ? -1 : StringToInteger(id);
    g_lastDealTime = time == "" ? 0 : (datetime)StringToInteger(time);
+   return true;
+}
+
+int TimeframeFromName(const string name)
+{
+   if(name == "M1") return PERIOD_M1;
+   if(name == "M5") return PERIOD_M5;
+   if(name == "M15") return PERIOD_M15;
+   if(name == "M30") return PERIOD_M30;
+   if(name == "H1") return PERIOD_H1;
+   if(name == "H4") return PERIOD_H4;
+   return PERIOD_D1;
+}
+
+bool AppendCandlesForTimeframe(const string symbol, const string name, const datetime exitTime, string &payload)
+{
+   int period = TimeframeFromName(name);
+   int digits = (int)MarketInfo(symbol, MODE_DIGITS);
+   int lastShift = iBarShift(symbol, period, exitTime, false);
+   if(lastShift < 0) return false;
+   int count = (int)MathMin(g_candleCount, iBars(symbol, period) - lastShift);
+   if(count <= 0) return false;
+
+   int offset = (int)(TimeCurrent() - TimeGMT());
+   payload += "\"" + name + "\":[";
+   int written = 0;
+   for(int shift = lastShift + count - 1; shift >= lastShift; shift--)
+   {
+      datetime time = iTime(symbol, period, shift);
+      if(time <= 0) continue;
+      if(written > 0) payload += ",";
+      payload += "{\"time\":" + IntegerToString((int)(time - offset));
+      payload += ",\"open\":" + DoubleToString(iOpen(symbol, period, shift), digits);
+      payload += ",\"high\":" + DoubleToString(iHigh(symbol, period, shift), digits);
+      payload += ",\"low\":" + DoubleToString(iLow(symbol, period, shift), digits);
+      payload += ",\"close\":" + DoubleToString(iClose(symbol, period, shift), digits);
+      payload += ",\"volume\":" + IntegerToString((int)iVolume(symbol, period, shift)) + "}";
+      written++;
+   }
+   payload += "]";
+   return written > 0;
+}
+
+bool AppendConfiguredCandles(const string symbol, const datetime exitTime, string &payload)
+{
+   payload += ",\"candles\":{";
+   for(int index = 0; index < ArraySize(g_timeframes); index++)
+   {
+      if(index > 0) payload += ",";
+      if(!AppendCandlesForTimeframe(symbol, g_timeframes[index], exitTime, payload))
+      {
+         Print("JournalSync candle history unavailable for ", symbol, " ", g_timeframes[index]);
+         return false;
+      }
+   }
+   payload += "}";
    return true;
 }
 
@@ -164,7 +249,9 @@ bool SendSelectedOrder()
    payload += "\"risk\":" + (hasRisk ? DoubleToString(risk, 2) : "null") + ",";
    payload += "\"fee\":" + DoubleToString(-(commission + swap), 2) + ",";
    payload += "\"profit\":" + DoubleToString(profit, 2) + ",";
-   payload += "\"result\":\"" + result + "\"}";
+   payload += "\"result\":\"" + result + "\"";
+   if(!AppendConfiguredCandles(symbol, exitTime, payload)) return false;
+   payload += "}";
 
    string response;
    int status = Request("POST", "/ingest", payload, response);
@@ -200,8 +287,8 @@ int OnInit()
       Print("JournalSync: AccountApiKey is required.");
       return INIT_PARAMETERS_INCORRECT;
    }
-   g_ready = FetchCursor();
    EventSetTimer((int)MathMax(5, PollSeconds));
+   g_ready = FetchCursor();
    if(g_ready) SyncHistory();
    return INIT_SUCCEEDED;
 }
@@ -213,6 +300,6 @@ void OnDeinit(const int reason)
 
 void OnTimer()
 {
-   if(!g_ready) g_ready = FetchCursor();
-   SyncHistory();
+   g_ready = FetchCursor();
+   if(g_ready) SyncHistory();
 }

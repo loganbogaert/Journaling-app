@@ -6,4 +6,4 @@ const manifest = Object.freeze({
   'trade-api': Object.freeze(['connections:write', 'connections:delete']),
 });
 
-module.exports = createServiceAuth({ verifyToken, audience: 'broker-sync-api', manifest });
+module.exports = createServiceAuth({ verifyToken, audience: 'broker-integration-api', manifest });

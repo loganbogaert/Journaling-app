@@ -31,8 +31,8 @@
       "defaultClientScopes": ["profile", "email", "roles", "web-origins"]
     },
     {
-      "clientId": "broker-sync-api",
-      "name": "Broker Sync API",
+      "clientId": "broker-integration-api",
+      "name": "Broker Integration API",
       "enabled": true,
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
@@ -67,12 +67,12 @@
       "serviceAccountsEnabled": true,
       "protocolMappers": [
         {
-          "name": "broker-sync-api-audience",
+          "name": "broker-integration-api-audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "consentRequired": false,
           "config": {
-            "included.client.audience": "broker-sync-api",
+            "included.client.audience": "broker-integration-api",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }

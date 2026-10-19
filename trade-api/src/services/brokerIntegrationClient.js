@@ -2,7 +2,7 @@
 
 const { createServiceClient } = require('@trading-journal/shared');
 const client = createServiceClient({
-  baseUrl: process.env.BROKER_SYNC_API_URL || 'http://broker-sync-api:4000',
+  baseUrl: process.env.BROKER_INTEGRATION_API_URL || 'http://broker-integration-api:4000',
   keycloakUrl: process.env.KEYCLOAK_URL,
   realm: process.env.KEYCLOAK_REALM,
   clientId: 'trade-api',
@@ -16,4 +16,9 @@ exports.provisionConnection = (connection) => client.request('/internal/connecti
 
 exports.revokeConnection = (accountId) => client.request(`/internal/connections/${accountId}`, {
   method: 'DELETE',
+});
+
+exports.storeScreenshot = (tradeId, screenshot) => client.request(`/internal/trades/${tradeId}/pictures`, {
+  method: 'POST',
+  body: JSON.stringify(screenshot),
 });

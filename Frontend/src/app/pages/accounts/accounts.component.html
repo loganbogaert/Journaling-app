@@ -10,7 +10,7 @@
       {{ copiedKey ? 'Copied' : 'Copy key' }}
     </button>
     <ol>
-      <li>Compile <code>broker-sync-api/ea/{{ eaFileName }}</code> in MetaEditor and attach it to a chart.</li>
+      <li>Compile <code>broker-integration-api/ea/{{ eaFileName }}</code> in MetaEditor and attach it to a chart.</li>
       <li>In MetaTrader, allow WebRequest to <code>{{ brokerApiBaseUrl }}</code>.</li>
       <li>Set the EA's API URL to <code>{{ brokerApiBaseUrl }}</code> and paste the key above into <code>AccountApiKey</code>.</li>
       <li>For the first backfill, set the terminal's account history to All History. The EA catches up after reconnects.</li>

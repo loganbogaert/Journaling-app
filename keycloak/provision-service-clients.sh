@@ -9,7 +9,7 @@ set +a
 : "${KEYCLOAK_ADMIN:?Set KEYCLOAK_ADMIN in .env}"
 : "${KEYCLOAK_ADMIN_PASSWORD:?Set KEYCLOAK_ADMIN_PASSWORD in .env}"
 : "${TRADE_API_CLIENT_SECRET:?Set TRADE_API_CLIENT_SECRET in .env}"
-: "${BROKER_SYNC_CLIENT_SECRET:?Set BROKER_SYNC_CLIENT_SECRET in .env}"
+: "${BROKER_INTEGRATION_CLIENT_SECRET:?Set BROKER_INTEGRATION_CLIENT_SECRET in .env}"
 
 realm=trading-journal
 kc() {
@@ -23,6 +23,13 @@ client_uuid() {
   kc get clients -r "$realm" -q "clientId=$1" |
     node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const rows=JSON.parse(s);process.stdout.write(rows[0]?.id||"")})'
 }
+
+legacy_uuid=$(client_uuid broker-sync-api)
+integration_uuid=$(client_uuid broker-integration-api)
+if [[ -n "$legacy_uuid" && -z "$integration_uuid" ]]; then
+  kc update "clients/$legacy_uuid" -r "$realm" -s clientId=broker-integration-api \
+    -s "name=Broker Integration API" >/dev/null
+fi
 
 ensure_mapper() {
   local uuid="$1" mapper_name="$2" audience="$3" mapper_id
@@ -52,9 +59,17 @@ ensure_client() {
   kc update "clients/$uuid" -r "$realm" -s enabled=true -s publicClient=false \
     -s standardFlowEnabled=false -s directAccessGrantsEnabled=false \
     -s serviceAccountsEnabled=true -s "secret=$secret" >/dev/null
-  ensure_mapper "$uuid" "$client_id-audience" "$audience"
+  ensure_mapper "$uuid" "$audience-audience" "$audience"
 }
 
-ensure_client trade-api "Trade API Service Client" "$TRADE_API_CLIENT_SECRET" broker-sync-api
-ensure_client broker-sync-api "Broker Sync API" "$BROKER_SYNC_CLIENT_SECRET" trade-api
-printf 'Configured trade-api and broker-sync-api service clients in realm %s.\n' "$realm"
+ensure_client trade-api "Trade API Service Client" "$TRADE_API_CLIENT_SECRET" broker-integration-api
+ensure_client broker-integration-api "Broker Integration API" "$BROKER_INTEGRATION_CLIENT_SECRET" trade-api
+
+trade_uuid=$(client_uuid trade-api)
+old_mapper=$(kc get "clients/$trade_uuid/protocol-mappers/models" -r "$realm" |
+  node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const m=JSON.parse(s).find(x=>x.name==="broker-sync-api-audience");process.stdout.write(m?.id||"")})')
+if [[ -n "$old_mapper" ]]; then
+  kc delete "clients/$trade_uuid/protocol-mappers/models/$old_mapper" -r "$realm" >/dev/null
+fi
+
+printf 'Configured trade-api and broker-integration-api service clients in realm %s.\n' "$realm"

@@ -1,5 +1,5 @@
 'use strict';
 
 module.exports = Object.freeze({
-  'broker-sync-api': Object.freeze(['trades:write']),
+  'broker-integration-api': Object.freeze(['trades:write', 'settings:read', 'pictures:write']),
 });

@@ -1,7 +1,10 @@
 <div class="page">
   <header class="page-header">
     <h1>Dashboard</h1>
-    <a routerLink="/accounts/new" class="btn-primary">+ New Account</a>
+    <div class="actions">
+      <a routerLink="/settings/screenshots" class="btn-secondary">Chart settings</a>
+      <a routerLink="/accounts/new" class="btn-primary">+ New Account</a>
+    </div>
   </header>
 
   <p *ngIf="loading">Loading…</p>

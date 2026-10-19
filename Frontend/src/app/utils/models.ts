@@ -43,6 +43,13 @@ export interface AccountCreationResponse extends Account {
   eaApiKey?: string;
 }
 
+export type ScreenshotTimeframe = 'M1' | 'M5' | 'M15' | 'M30' | 'H1' | 'H4' | 'D1';
+
+export interface ScreenshotSettings {
+  timeframes: ScreenshotTimeframe[];
+  candleCount: number;
+}
+
 export interface Pair {
   id: number;
   pair: string;

@@ -5,7 +5,7 @@ const routes = require('./routes');
 
 const app = express();
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use('/', routes);
 app.use((err, req, res, next) => {
   console.error(`[internal ${req.method} ${req.originalUrl}]`, err);

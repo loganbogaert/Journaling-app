@@ -32,6 +32,12 @@ const minioPublicClient = new Minio.Client({
 // Must match the route path in kong/kong.yml's minio service.
 const GATEWAY_MINIO_PREFIX = '/minio';
 
+exports.storeGeneratedPng = async (objectName, imageBuffer) => {
+  const bucket = process.env.MINIO_BUCKET;
+  if (!bucket) throw new Error('Server misconfiguration: MINIO_BUCKET env var is not set');
+  await minioClient.putObject(bucket, objectName, imageBuffer, imageBuffer.length, { 'Content-Type': 'image/png' });
+};
+
 // Inserts Kong's /minio path prefix into a presigned URL so the browser's request goes
 // through Kong. Safe post-signing: Kong strips this prefix (strip_path: true) before
 // forwarding, so MinIO receives the exact path/query that was originally signed.
