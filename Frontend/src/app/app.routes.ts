@@ -20,25 +20,31 @@ export const routes: Routes = [
       import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
   },
   {
-    path: 'sessions/new',
+    path: 'settings/screenshots',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/sessions/sessions.component').then((m) => m.SessionsComponent),
+      import('./pages/screenshot-settings/screenshot-settings.component').then((m) => m.ScreenshotSettingsComponent),
   },
   {
-    path: 'sessions/:id',
+    path: 'accounts/new',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/session-detail/session-detail.component').then((m) => m.SessionDetailComponent),
+      import('./pages/accounts/accounts.component').then((m) => m.AccountsComponent),
   },
   {
-    path: 'sessions/:id/edit',
+    path: 'accounts/:id',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./pages/sessions/sessions.component').then((m) => m.SessionsComponent),
+      import('./pages/account-detail/account-detail.component').then((m) => m.AccountDetailComponent),
   },
   {
-    path: 'sessions/:sessionId/trades/new',
+    path: 'accounts/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./pages/accounts/accounts.component').then((m) => m.AccountsComponent),
+  },
+  {
+    path: 'accounts/:accountId/trades/new',
     canActivate: [authGuard],
     loadComponent: () =>
       import('./pages/trades/trades.component').then((m) => m.TradesComponent),
