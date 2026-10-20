@@ -3,7 +3,7 @@
 const { BrokerConnection, ImportedDeal, sequelize } = require('../models');
 const { runMetaApiSync } = require('../services/metaApiSync');
 const tradeClient = require('../services/tradeApiClient');
-const { renderCandlestickChart } = require('../services/chartRenderer');
+const { createChartRenderer } = require('../services/chartRenderer');
 
 function status(connection) {
   return {
@@ -94,7 +94,7 @@ exports.start = async (req, res, next) => {
       api,
       tradeClient,
       receipts: ImportedDeal,
-      render: renderCandlestickChart,
+      render: createChartRenderer(),
     })
       .then(() => connection.update({ syncState: 'succeeded', syncError: null }))
       .catch(async (err) => {

@@ -190,7 +190,7 @@ async function runMetaApiSync(connection, { api, tradeClient, receipts, render }
         );
         if (!candles.length) throw new Error('Historical candles unavailable; sync can be retried');
 
-        const png = render({
+        const png = await render({
           ...trade,
           timeframe,
           candles: candles.map((candle) => ({
@@ -229,10 +229,15 @@ async function runMetaApiSync(connection, { api, tradeClient, receipts, render }
       cleanupFailed = true;
     }
 
-    if (cleanupFailed)
-      throw new Error(
-        'MetaApi cleanup failed. Check the account in MetaApi and undeploy it to avoid hosting charges',
-      );
+    try {
+      await render.close?.();
+    } finally {
+      if (cleanupFailed) {
+        throw new Error(
+          'MetaApi cleanup failed. Check the account in MetaApi and undeploy it to avoid hosting charges',
+        );
+      }
+    }
   }
 }
 

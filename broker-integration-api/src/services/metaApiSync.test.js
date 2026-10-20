@@ -315,3 +315,33 @@ test('credential encryption rejects tampered ciphertext', () => {
   parts[1] = Buffer.alloc(16).toString('base64');
   assert.throws(() => credentials.decrypt(parts.join('.')));
 });
+
+test('async renderer completes before upload and closes at the end of a sync', async () => {
+  const { connection, dependencies, events } = fixture();
+  dependencies.render = async () => {
+    await Promise.resolve();
+    events.push('rendered');
+    return Buffer.from('async-png');
+  };
+  dependencies.render.close = async () => events.push('browser-closed');
+  dependencies.tradeClient.storeScreenshot = async (id, screenshot) => {
+    assert.equal(events[events.length - 1], 'rendered');
+    assert.equal(screenshot.imageBase64, Buffer.from('async-png').toString('base64'));
+  };
+
+  await runMetaApiSync(connection, dependencies);
+  assert.equal(events[events.length - 1], 'browser-closed');
+});
+
+test('renderer failure does not complete an import and still closes browser and broker', async () => {
+  const { connection, dependencies, events, imported } = fixture();
+  dependencies.render = async () => {
+    throw new Error('browser render failed');
+  };
+  dependencies.render.close = async () => events.push('browser-closed');
+
+  await assert.rejects(runMetaApiSync(connection, dependencies), /browser render failed/);
+  assert.equal(imported.size, 0);
+  assert.equal(connection.syncedThrough, undefined);
+  assert.deepEqual(events.slice(-4), ['closed', 'undeploy', 'undeployed', 'browser-closed']);
+});

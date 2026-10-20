@@ -18,7 +18,9 @@ exports.getCursor = async (req, res, next) => {
     const settings = await tradeApiClient.getScreenshotSettings(connection.accountId);
     return res.status(200).json({
       lastDealId: connection.lastDealId,
-      lastDealTime: connection.lastDealTime ? Math.floor(connection.lastDealTime.getTime() / 1000) : null,
+      lastDealTime: connection.lastDealTime
+        ? Math.floor(connection.lastDealTime.getTime() / 1000)
+        : null,
       timeframes: settings.timeframes,
       candleCount: settings.candleCount,
     });
@@ -41,7 +43,7 @@ exports.ingest = async (req, res, next) => {
       const candles = deal.candles?.[timeframe];
       if (!candles?.length) throw new Error(`Missing candle payload for ${timeframe}`);
 
-      const png = renderCandlestickChart({
+      const png = await renderCandlestickChart({
         symbol: deal.symbol,
         timeframe,
         candles,
@@ -57,10 +59,11 @@ exports.ingest = async (req, res, next) => {
 
     const incomingTime = new Date(cursorTime * 1000);
     const previousTime = connection.lastDealTime ? new Date(connection.lastDealTime) : null;
-    const shouldAdvance = !previousTime
-      || incomingTime > previousTime
-      || (incomingTime.getTime() === previousTime.getTime()
-        && compareDealIds(deal.externalDealId, connection.lastDealId || '') > 0);
+    const shouldAdvance =
+      !previousTime ||
+      incomingTime > previousTime ||
+      (incomingTime.getTime() === previousTime.getTime() &&
+        compareDealIds(deal.externalDealId, connection.lastDealId || '') > 0);
 
     if (shouldAdvance) {
       await connection.update({
@@ -74,7 +77,9 @@ exports.ingest = async (req, res, next) => {
       duplicate: !trade.created,
       cursor: {
         lastDealId: connection.lastDealId,
-        lastDealTime: connection.lastDealTime ? Math.floor(connection.lastDealTime.getTime() / 1000) : null,
+        lastDealTime: connection.lastDealTime
+          ? Math.floor(connection.lastDealTime.getTime() / 1000)
+          : null,
       },
     });
   } catch (err) {
