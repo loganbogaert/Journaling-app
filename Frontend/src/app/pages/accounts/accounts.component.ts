@@ -33,7 +33,7 @@ export class AccountsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private accountService: AccountService
+    private accountService: AccountService,
   ) {}
 
   ngOnInit(): void {
@@ -79,9 +79,10 @@ export class AccountsComponent implements OnInit {
       payload.investorPassword = this.form.investorPassword;
     }
 
-    const request = this.isEdit && this.accountId
-      ? this.accountService.update(this.accountId, payload)
-      : this.accountService.create(payload);
+    const request =
+      this.isEdit && this.accountId
+        ? this.accountService.update(this.accountId, payload)
+        : this.accountService.create(payload);
 
     request.subscribe({
       next: (account) => {
@@ -94,5 +95,4 @@ export class AccountsComponent implements OnInit {
       },
     });
   }
-
 }

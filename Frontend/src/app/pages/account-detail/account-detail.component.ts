@@ -29,18 +29,22 @@ export class AccountDetailComponent implements OnInit, OnDestroy {
   readonly formatDecimal = formatDecimal;
 
   get currentBalance(): number {
-    return this.balanceHistory.length ? this.balanceHistory[this.balanceHistory.length - 1].balance : (this.account?.accountBalance ?? 0);
+    return this.balanceHistory.length
+      ? this.balanceHistory[this.balanceHistory.length - 1].balance
+      : (this.account?.accountBalance ?? 0);
   }
 
   get currentBalancePercent(): number {
-    return this.balanceHistory.length ? this.balanceHistory[this.balanceHistory.length - 1].percent : 0;
+    return this.balanceHistory.length
+      ? this.balanceHistory[this.balanceHistory.length - 1].percent
+      : 0;
   }
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private accountService: AccountService,
-    private tradeService: TradeService
+    private tradeService: TradeService,
   ) {}
 
   ngOnInit(): void {
@@ -56,7 +60,9 @@ export class AccountDetailComponent implements OnInit, OnDestroy {
             this.balanceHistory = data.balanceHistory;
             this.loading = false;
           },
-          error: () => { this.loading = false; },
+          error: () => {
+            this.loading = false;
+          },
         });
       },
       error: (err) => {
@@ -92,26 +98,41 @@ export class AccountDetailComponent implements OnInit, OnDestroy {
     if (!this.account) return;
     const accountId = this.account.id;
     this.syncSubscription?.unsubscribe();
-    this.syncSubscription = timer(0, 2500).pipe(
-      exhaustMap(() => this.accountService.syncStatus(accountId)),
-      takeWhile((status) => status.state === 'syncing', true),
-    ).subscribe({
-      next: (status) => {
-        this.syncing = status.state === 'syncing';
-        this.syncMessage = this.syncing ? 'Syncing trades and charts...'
-          : status.state === 'succeeded' ? `Sync complete: ${status.result?.imported || 0} imported, ${status.result?.skipped || 0} already present.` : '';
-        if (status.credentialsRequired) this.error = 'Edit this account to add its investor password.';
-        if (status.state === 'failed') this.error = status.error || 'Sync failed';
-        if (status.state === 'succeeded') {
-          this.tradeService.getByAccount(accountId).subscribe({ next: (data) => {
-            this.trades = data.trades; this.metrics = data.metrics; this.balanceHistory = data.balanceHistory;
-          } });
-          if (this.account) this.account.lastSyncedAt = status.lastSyncedAt;
-        }
-      },
-      error: (err) => { this.syncing = false; this.error = err.error?.message || 'Could not read sync status'; },
-    });
+    this.syncSubscription = timer(0, 2500)
+      .pipe(
+        exhaustMap(() => this.accountService.syncStatus(accountId)),
+        takeWhile((status) => status.state === 'syncing', true),
+      )
+      .subscribe({
+        next: (status) => {
+          this.syncing = status.state === 'syncing';
+          this.syncMessage = this.syncing
+            ? 'Syncing trades and charts...'
+            : status.state === 'succeeded'
+              ? `Sync complete: ${status.result?.imported || 0} imported, ${status.result?.skipped || 0} already present.`
+              : '';
+          if (status.credentialsRequired)
+            this.error = 'Edit this account to add its investor password.';
+          if (status.state === 'failed') this.error = status.error || 'Sync failed';
+          if (status.state === 'succeeded') {
+            this.tradeService.getByAccount(accountId).subscribe({
+              next: (data) => {
+                this.trades = data.trades;
+                this.metrics = data.metrics;
+                this.balanceHistory = data.balanceHistory;
+              },
+            });
+            if (this.account) this.account.lastSyncedAt = status.lastSyncedAt;
+          }
+        },
+        error: (err) => {
+          this.syncing = false;
+          this.error = err.error?.message || 'Could not read sync status';
+        },
+      });
   }
 
-  ngOnDestroy(): void { this.syncSubscription?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.syncSubscription?.unsubscribe();
+  }
 }
