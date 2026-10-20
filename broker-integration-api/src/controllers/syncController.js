@@ -58,7 +58,7 @@ exports.start = async (req, res, next) => {
     runMetaApiSync(connection, { api, tradeClient, receipts: ImportedDeal, render: renderCandlestickChart })
       .then(() => connection.update({ syncState: 'succeeded', syncError: null }))
       .catch(async (err) => {
-        const message = err.message.startsWith('MetaApi cleanup failed') ? err.message
+        const message = err.status === 409 || err.message.startsWith('MetaApi cleanup failed') ? err.message
           : 'Sync failed. Verify broker credentials, MetaApi access and historical-data permissions, then retry.';
         await connection.update({ syncState: 'failed', syncError: message });
       })

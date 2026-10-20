@@ -16,6 +16,7 @@ function fixture({ platform = 'mt5', failCandles = false, failUndeploy = false, 
   const rpc = {
     async connect() { events.push('connect'); if (failConnect) throw new Error('connect failed'); },
     async waitSynchronized() { events.push('synchronized'); },
+    async getAccountInformation() { return { currency: 'USD' }; },
     async close() { events.push('closed'); },
     async getDealsByTimeRange() { return { deals: [close] }; },
     async getHistoryOrdersByTimeRange() { return { historyOrders: [order] }; },
@@ -99,6 +100,9 @@ test('first sync registers lazily, stores trades/charts then checkpoints and und
   assert.equal(events.filter((event) => Array.isArray(event) && event[0] === 'picture').length, 3);
   const trade = events.find((event) => Array.isArray(event) && event[0] === 'trade')[1];
   assert.equal(trade.risk, 5);
+  assert.equal(trade.currency, 'USD');
+  assert.equal(trade.profit, 10);
+  assert.equal(trade.fee, 2);
   assert.equal(trade.volume, undefined);
   assert.ok(imported.has('2'));
   assert.deepEqual(events.slice(-3), ['closed', 'undeploy', 'undeployed']);
@@ -113,6 +117,44 @@ test('first sync registers lazily, stores trades/charts then checkpoints and und
 test('MT4 imports through closed-order history', async () => {
   const { connection, dependencies } = fixture({ platform: 'mt4' });
   assert.equal((await runMetaApiSync(connection, dependencies)).imported, 1);
+});
+
+test('EUR account sends monetary risk and fees without storing lot volume', async () => {
+  const { connection, dependencies, events } = fixture();
+  const account = await dependencies.api.metatraderAccountApi.createAccount({ password: 'investor-test' });
+  const rpc = account.getRPCConnection();
+  rpc.getAccountInformation = async () => ({ currency: 'EUR' });
+  rpc.getSymbolSpecification = async () => ({ tickSize: 0.01 });
+  rpc.getSymbolPrice = async () => ({ lossTickValue: 2 });
+  await runMetaApiSync(connection, dependencies);
+  const trade = events.find((event) => Array.isArray(event) && event[0] === 'trade')[1];
+  assert.equal(trade.currency, 'EUR');
+  assert.equal(trade.risk, 1000);
+  assert.equal(trade.profit - trade.fee, 8);
+  assert.equal(trade.volume, undefined);
+});
+
+test('missing broker currency rejects imports and still undeploys', async () => {
+  const { connection, dependencies, events } = fixture();
+  const account = await dependencies.api.metatraderAccountApi.createAccount({ password: 'investor-test' });
+  account.getRPCConnection().getAccountInformation = async () => ({});
+  await assert.rejects(runMetaApiSync(connection, dependencies), /currency is unavailable/);
+  assert.ok(!events.some((event) => Array.isArray(event) && event[0] === 'trade'));
+  assert.deepEqual(events.slice(-3), ['closed', 'undeploy', 'undeployed']);
+});
+
+test('journal currency mismatch leaves import incomplete and still undeploys', async () => {
+  const { connection, dependencies, events, imported } = fixture();
+  dependencies.tradeClient.ingestTrade = async () => {
+    const error = new Error('Broker account uses USD, but the journal account uses EUR.');
+    error.status = 409;
+    throw error;
+  };
+  await assert.rejects(runMetaApiSync(connection, dependencies), { status: 409 });
+  assert.equal(connection.syncedThrough, undefined);
+  assert.equal(imported.size, 0);
+  assert.ok(!events.some((event) => Array.isArray(event) && event[0] === 'picture'));
+  assert.deepEqual(events.slice(-3), ['closed', 'undeploy', 'undeployed']);
 });
 
 test('failed screenshots do not advance checkpoint or completed receipt; cleanup still runs', async () => {

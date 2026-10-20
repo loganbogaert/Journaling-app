@@ -4,6 +4,7 @@ const Joi = require('joi');
 
 module.exports = Joi.object({
   accountId: Joi.number().integer().positive().required(),
+  currency: Joi.string().trim().uppercase().pattern(/^[A-Z]{3}$/).required(),
   symbol: Joi.string().trim().min(1).max(255).required(),
   externalDealId: Joi.string().trim().min(1).max(64).required(),
   entry: Joi.number().positive().required(),

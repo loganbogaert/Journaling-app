@@ -75,6 +75,9 @@ async function runMetaApiSync(connection, { api, tradeClient, receipts, render }
     rpc = account.getRPCConnection();
     await rpc.connect();
     await rpc.waitSynchronized(120);
+    const accountInformation = await rpc.getAccountInformation();
+    const currency = String(accountInformation.currency || '').trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) throw new Error('Broker account currency is unavailable or unsupported');
     const end = new Date();
     const start = connection.syncedThrough
       ? new Date(Math.max(0, new Date(connection.syncedThrough).getTime() - 24 * 3600_000)) : new Date(0);
@@ -107,7 +110,7 @@ async function runMetaApiSync(connection, { api, tradeClient, receipts, render }
       delete trade.volume;
       const net = trade.profit - trade.fee;
       trade.result = Math.abs(net) < 0.005 ? 'BE' : net > 0 ? 'W' : 'L';
-      const stored = await tradeClient.ingestTrade({ accountId: connection.accountId, ...trade });
+      const stored = await tradeClient.ingestTrade({ accountId: connection.accountId, currency, ...trade });
       for (const timeframe of settings.timeframes) {
         const candles = await account.getHistoricalCandles(trade.symbol, TIMEFRAMES[timeframe], trade.exitDate, settings.candleCount);
         if (!candles.length) throw new Error('Historical candles unavailable; sync can be retried');
