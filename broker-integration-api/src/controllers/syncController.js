@@ -17,6 +17,7 @@ exports.status = async (req, res, next) => {
   try {
     const connection = await BrokerConnection.findOne({ where: { accountId: req.params.accountId } });
     if (!connection) return res.status(404).json({ message: 'Broker connection not found' });
+
     if (connection.syncState === 'syncing') {
       await sequelize.transaction(async (transaction) => {
         const [rows] = await sequelize.query('SELECT pg_try_advisory_xact_lock(20261019, :accountId) AS acquired', {
@@ -30,12 +31,16 @@ exports.status = async (req, res, next) => {
         }
       });
     }
+
     return res.json(status(connection));
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.start = async (req, res, next) => {
   let lock;
+
   try {
     const connection = await BrokerConnection.findOne({ where: { accountId: req.params.accountId } });
     if (!connection) return res.status(404).json({ message: 'Broker connection not found' });
@@ -43,18 +48,24 @@ exports.start = async (req, res, next) => {
     if (!process.env.META_API_ACCESS_TOKEN || process.env.META_API_ACCESS_TOKEN.startsWith('replace-with-')) {
       return res.status(503).json({ message: 'META_API_ACCESS_TOKEN is not configured on the server' });
     }
+
     lock = await sequelize.connectionManager.getConnection();
     const acquired = await lock.query('SELECT pg_try_advisory_lock(20261019, $1) AS acquired', [connection.accountId]);
+
     if (!acquired.rows[0].acquired) {
       await sequelize.connectionManager.releaseConnection(lock);
       lock = null;
       return res.status(409).json({ message: 'A sync is already running for this account' });
     }
+
     const MetaApi = require('metaapi.cloud-sdk').default;
     const api = new MetaApi(process.env.META_API_ACCESS_TOKEN);
+
     await connection.update({ syncState: 'syncing', syncError: null, syncResult: null });
+
     const heldLock = lock;
     lock = null;
+
     runMetaApiSync(connection, { api, tradeClient, receipts: ImportedDeal, render: renderCandlestickChart })
       .then(() => connection.update({ syncState: 'succeeded', syncError: null }))
       .catch(async (err) => {
@@ -63,15 +74,20 @@ exports.start = async (req, res, next) => {
         await connection.update({ syncState: 'failed', syncError: message });
       })
       .finally(async () => {
-        try { await heldLock.query('SELECT pg_advisory_unlock(20261019, $1)', [connection.accountId]); }
-        finally { await sequelize.connectionManager.releaseConnection(heldLock); }
+        try {
+          await heldLock.query('SELECT pg_advisory_unlock(20261019, $1)', [connection.accountId]);
+        } finally {
+          await sequelize.connectionManager.releaseConnection(heldLock);
+        }
       }).catch(() => console.error('Could not persist broker sync outcome or release its lock'));
+
     return res.status(202).json(status(connection));
   } catch (err) {
     if (lock) {
       await lock.query('SELECT pg_advisory_unlock(20261019, $1)', [Number(req.params.accountId)]).catch(() => {});
       await sequelize.connectionManager.releaseConnection(lock);
     }
+
     next(err);
   }
 };
