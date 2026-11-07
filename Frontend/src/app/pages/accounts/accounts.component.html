@@ -1,0 +1,56 @@
+<div class="page form-page">
+    <h1>{{ isEdit ? 'Edit Account' : 'New Account' }}</h1>
+    <form #accountFormElement="ngForm" (ngSubmit)="accountFormElement.valid && onSubmit()">
+    <div class="field" *ngIf="!isEdit">
+      <label for="type">Account type</label>
+      <select id="type" [(ngModel)]="form.type" name="type">
+        <option value="manual">Manual</option>
+        <option value="connected">Connected</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" type="text" [(ngModel)]="form.name" name="name" required />
+    </div>
+    <div class="field">
+      <label for="balance">Account Balance</label>
+      <input id="balance" type="number" [(ngModel)]="form.accountBalance" name="accountBalance" required min="0" />
+    </div>
+    <div class="field">
+      <label for="currency">Currency</label>
+      <input id="currency" type="text" [(ngModel)]="form.currency" name="currency" required maxlength="3" />
+    </div>
+    <ng-container *ngIf="form.type === 'connected'">
+      <div class="field">
+        <label for="platform">Platform</label>
+        <select id="platform" [(ngModel)]="form.platform" name="platform" required [disabled]="isEdit">
+          <option value="mt5">MetaTrader 5</option>
+          <option value="mt4">MetaTrader 4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="brokerLogin">Account login</label>
+        <input id="brokerLogin" type="text" [(ngModel)]="form.brokerLogin" name="brokerLogin" required maxlength="64" [readonly]="isEdit" />
+      </div>
+      <div class="field">
+        <label for="brokerServer">Broker server</label>
+        <input id="brokerServer" type="text" [(ngModel)]="form.brokerServer" name="brokerServer" required maxlength="255" [readonly]="isEdit" />
+      </div>
+      <div class="field">
+        <label for="investorPassword">{{ isEdit ? 'Replace investor password (optional)' : 'Investor password' }}</label>
+        <input id="investorPassword" type="password" [(ngModel)]="form.investorPassword" name="investorPassword" [required]="!isEdit" maxlength="256" autocomplete="new-password" />
+      </div>
+    </ng-container>
+    <div class="field">
+      <label for="startDate">Start Date</label>
+      <input id="startDate" type="date" [(ngModel)]="form.startDate" name="startDate" />
+    </div>
+    <div class="field">
+      <label for="endDate">End Date</label>
+      <input id="endDate" type="date" [(ngModel)]="form.endDate" name="endDate" />
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <button type="submit" [disabled]="loading || accountFormElement.invalid">{{ loading ? 'Saving…' : 'Save' }}</button>
+    </form>
+</div>

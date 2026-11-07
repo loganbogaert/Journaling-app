@@ -1,10 +1,10 @@
 <div class="page form-page">
   <header class="page-header">
     <h1>{{ isEdit ? 'Edit Trade' : 'New Trade' }}</h1>
-    <a [routerLink]="['/sessions', sessionId]" class="btn-secondary">← Back to Session</a>
+    <a [routerLink]="['/accounts', accountId]" class="btn-secondary">← Back to Account</a>
   </header>
 
-  <form (ngSubmit)="onSubmit()">
+  <form #tradeForm="ngForm" (ngSubmit)="tradeForm.valid && onSubmit()">
     <div class="field">
       <label for="pair">Pair</label>
       <select id="pair" [(ngModel)]="form.pairId" name="pairId" required>
@@ -33,15 +33,18 @@
     </div>
     <div class="field">
       <label for="tp">Take Profit</label>
-      <input id="tp" type="number" [(ngModel)]="form.tp" name="tp" step="0.0001" required />
+      <input id="tp" type="number" [(ngModel)]="form.tp" name="tp" step="0.0001" min="0" required #tpCtrl="ngModel" />
+      <small class="error" *ngIf="tpCtrl.invalid && tpCtrl.touched">Take profit is required.</small>
     </div>
     <div class="field">
       <label for="sl">Stop Loss</label>
-      <input id="sl" type="number" [(ngModel)]="form.sl" name="sl" step="0.0001" required />
+      <input id="sl" type="number" [(ngModel)]="form.sl" name="sl" step="0.0001" min="0" required #slCtrl="ngModel" />
+      <small class="error" *ngIf="slCtrl.invalid && slCtrl.touched">Stop loss is required.</small>
     </div>
     <div class="field">
       <label for="risk">Risk</label>
-      <input id="risk" type="number" [(ngModel)]="form.risk" name="risk" step="0.01" required (ngModelChange)="onRiskChange()" />
+      <input id="risk" type="number" [(ngModel)]="form.risk" name="risk" step="0.01" min="0" required #riskCtrl="ngModel" (ngModelChange)="onRiskChange()" />
+      <small class="error" *ngIf="riskCtrl.invalid && riskCtrl.touched">Risk is required.</small>
     </div>
     <div class="field">
       <label for="fee">Fee</label>
@@ -86,6 +89,6 @@
     </div>
 
     <p class="error" *ngIf="error">{{ error }}</p>
-    <button type="submit" [disabled]="loading">{{ loading ? 'Saving…' : 'Save Trade' }}</button>
+    <button type="submit" [disabled]="loading || tradeForm.invalid">{{ loading ? 'Saving…' : 'Save Trade' }}</button>
   </form>
 </div>

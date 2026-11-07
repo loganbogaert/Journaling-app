@@ -12,7 +12,7 @@
       <span class="meta">{{ formatDate(trade.entryDate) }} → {{ formatDate(trade.exitDate) }}</span>
     </div>
     <div class="actions">
-      <a [routerLink]="['/sessions', trade.sessionId]" class="btn-secondary">← Back to Session</a>
+      <a [routerLink]="['/accounts', trade.accountId]" class="btn-secondary">← Back to Account</a>
       <a [routerLink]="['/trades', trade.id, 'edit']" class="btn-secondary">Edit</a>
       <button (click)="deleteTrade()" class="btn-danger">Delete</button>
     </div>
@@ -78,6 +78,10 @@
     <ng-template #emptyGallery>
       <p class="gallery-empty" *ngIf="!uploading">No screenshots yet.</p>
     </ng-template>
+    <p class="meta">
+      Generated charts: <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView Lightweight Charts</a>.
+      Copyright (c) 2025 TradingView, Inc.
+    </p>
   </section>
 </div>
 

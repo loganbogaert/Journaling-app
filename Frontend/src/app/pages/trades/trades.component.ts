@@ -6,7 +6,7 @@ import { forkJoin, of, switchMap } from 'rxjs';
 import { TradeService } from '../../services/trade.service';
 import { PairService } from '../../services/pair.service';
 import { ImageService } from '../../services/image.service';
-import { Pair, Trade } from '../../utils/models';
+import { Pair, Trade, TradeInput } from '../../utils/models';
 
 @Component({
   selector: 'app-trades',
@@ -17,7 +17,7 @@ import { Pair, Trade } from '../../utils/models';
 export class TradesComponent implements OnInit {
   isEdit = false;
   tradeId: number | null = null;
-  sessionId!: number;
+  accountId!: number;
   pairs: Pair[] = [];
   loading = false;
   error = '';
@@ -76,7 +76,7 @@ export class TradesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.sessionId = Number(this.route.snapshot.paramMap.get('sessionId'));
+    this.accountId = Number(this.route.snapshot.paramMap.get('accountId'));
     this.tradeId = this.route.snapshot.paramMap.get('tradeId')
       ? Number(this.route.snapshot.paramMap.get('tradeId'))
       : null;
@@ -87,7 +87,7 @@ export class TradesComponent implements OnInit {
     if (this.isEdit && this.tradeId) {
       this.tradeService.getById(this.tradeId).subscribe({
         next: (t: Trade) => {
-          this.sessionId = t.sessionId;
+          this.accountId = t.accountId;
           this.form.pairId = t.pairId;
           this.form.entryDate = t.entryDate.substring(0, 16);
           this.form.exitDate = t.exitDate.substring(0, 16);
@@ -106,18 +106,22 @@ export class TradesComponent implements OnInit {
   }
 
   onSubmit(): void {
+    if (this.form.tp == null || this.form.sl == null || this.form.risk == null) {
+      this.error = 'Take profit, stop loss and risk are required.';
+      return;
+    }
     this.error = '';
     this.loading = true;
-    const payload = {
-      sessionId: this.sessionId,
+    const payload: TradeInput = {
+      accountId: this.accountId,
       pairId: this.form.pairId!,
       entry: this.form.entry!,
-      tp: this.form.tp!,
-      sl: this.form.sl!,
+      tp: this.form.tp,
+      sl: this.form.sl,
       entryDate: this.form.entryDate,
       exitDate: this.form.exitDate,
       direction: this.form.direction,
-      risk: this.form.risk!,
+      risk: this.form.risk,
       fee: this.form.fee ?? 0,
       profit: this.form.result === 'L'
         ? -Math.abs(this.form.risk ?? 0)
@@ -144,7 +148,7 @@ export class TradesComponent implements OnInit {
     ).subscribe({
       next: () => this.isEdit && this.tradeId
         ? this.router.navigate(['/trades', this.tradeId])
-        : this.router.navigate(['/sessions', this.sessionId]),
+        : this.router.navigate(['/accounts', this.accountId]),
       error: (err: { error?: { message?: string } }) => {
         this.error = err.error?.message ?? 'Failed to save trade';
         this.loading = false;

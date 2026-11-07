@@ -5,8 +5,8 @@ _transform: true
 # It routes:
 #   /          -> frontend (Angular SPA, static files)
 #   /auth/*    -> Keycloak (hosted login/registration/token endpoints)
-#   /api/*     -> backend, after verifying the caller's Keycloak access token
-#   /minio/*   -> MinIO (trade picture storage, via presigned URLs the backend generates)
+#   /api/*     -> trade-api, after verifying the caller's Keycloak access token
+#   /minio/*   -> MinIO (trade picture storage, via presigned URLs trade-api generates)
 #
 # Auth model:
 #   - Keycloak issues/validates user identity & tokens.
@@ -49,10 +49,10 @@ services:
           headers: [Accept, Authorization, Content-Type]
           credentials: true
 
-  - name: backend-api
-    url: http://backend:3000
+  - name: trade-api
+    url: http://trade-api:3000
     routes:
-      - name: backend-api-route
+      - name: trade-api-route
         paths:
           - /api
         strip_path: true

@@ -6,17 +6,56 @@ export interface User {
   roles?: string[];
 }
 
-export interface Session {
+export type AccountType = 'manual' | 'connected';
+
+export interface Account {
   id: number;
   /** Keycloak subject (`sub` claim) of the owning user */
   userId: string;
+  type: AccountType;
   name: string;
   accountBalance: number;
   currency: string;
   startDate?: string | null;
   endDate?: string | null;
+  platform?: 'mt4' | 'mt5' | null;
+  brokerServer?: string | null;
+  brokerLogin?: string | null;
+  syncStatus?: 'pending' | 'active' | 'error' | 'disabled' | null;
+  lastSyncedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AccountInput {
+  type: AccountType;
+  name: string;
+  accountBalance: number;
+  currency: string;
+  startDate?: string | null;
+  endDate?: string | null;
+  platform?: 'mt4' | 'mt5';
+  brokerServer?: string;
+  brokerLogin?: string;
+  investorPassword?: string;
+}
+
+export interface AccountCreationResponse extends Account {
+}
+
+export interface BrokerSyncStatus {
+  state: 'idle' | 'syncing' | 'succeeded' | 'failed';
+  error: string | null;
+  result: { imported: number; skipped: number } | null;
+  lastSyncedAt: string | null;
+  credentialsRequired: boolean;
+}
+
+export type ScreenshotTimeframe = 'M1' | 'M5' | 'M15' | 'M30' | 'H1' | 'H4' | 'D1';
+
+export interface ScreenshotSettings {
+  timeframes: ScreenshotTimeframe[];
+  candleCount: number;
 }
 
 export interface Pair {
@@ -26,7 +65,29 @@ export interface Pair {
 
 export interface Trade {
   id: number;
-  sessionId: number;
+  accountId: number;
+  source: 'manual' | 'sync';
+  externalDealId?: string | null;
+  pairId: number;
+  entry: number;
+  exit?: number | null;
+  /** Always set on manual trades; may be null on synced trades */
+  tp: number | null;
+  sl: number | null;
+  entryDate: string;
+  exitDate: string;
+  direction: 'long' | 'short';
+  risk: number | null;
+  fee: number;
+  profit: number;
+  result: 'W' | 'BE' | 'L';
+  notes?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TradeInput {
+  accountId: number;
   pairId: number;
   entry: number;
   tp: number;
@@ -38,9 +99,7 @@ export interface Trade {
   fee: number;
   profit: number;
   result: 'W' | 'BE' | 'L';
-  notes?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
+  notes: string | null;
 }
 
 export interface TradePicture {
@@ -59,7 +118,7 @@ export interface BalanceHistoryPoint {
   result: 'W' | 'BE' | 'L' | null;
 }
 
-export interface SessionMetrics {
+export interface AccountMetrics {
   totalTrades: number;
   winningTrades: number;
   losingTrades: number;
@@ -68,9 +127,9 @@ export interface SessionMetrics {
   averageRiskReward: number;
 }
 
-export interface SessionTradesResponse {
+export interface AccountTradesResponse {
   trades: Trade[];
-  metrics: SessionMetrics;
+  metrics: AccountMetrics;
   startingBalance: number;
   balanceHistory: BalanceHistoryPoint[];
 }

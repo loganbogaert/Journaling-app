@@ -88,16 +88,37 @@ services:
       keycloak-db:
         condition: service_healthy
 
-  backend:
+  keycloak-provisioner:
+    image: node:22-alpine
+    container_name: trading_journal_keycloak_provisioner
+    restart: "no"
+    working_dir: /app
+    command: ["node", "provision-service-clients.js"]
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KEYCLOAK_ADMIN_SERVER: http://keycloak:8080/auth
+      TRADE_API_CLIENT_SECRET: ${TRADE_API_CLIENT_SECRET}
+      BROKER_INTEGRATION_CLIENT_SECRET: ${BROKER_INTEGRATION_CLIENT_SECRET}
+    volumes:
+      - ./keycloak/provision-service-clients.js:/app/provision-service-clients.js:ro
+    depends_on:
+      keycloak:
+        condition: service_started
+
+  trade-api:
     build:
-      context: ./Backend
-      dockerfile: Dockerfile
-    container_name: trading_journal_backend
+      context: .
+      dockerfile: trade-api/Dockerfile
+    container_name: trading_journal_trade_api
     restart: unless-stopped
     env_file: .env
     environment:
       NODE_ENV: development
       PORT: 3000
+      BROKER_INTEGRATION_API_URL: http://broker-integration-api:4000
+      INTERNAL_PORT: 3001
+      INTERNAL_HOST: 0.0.0.0
       HOST: 0.0.0.0
       DB_HOST: postgres
       DB_PORT: 5432
@@ -111,11 +132,54 @@ services:
       KEYCLOAK_ISSUER_URL: http://localhost:8000/auth
       KEYCLOAK_REALM: trading-journal
       KONG_GATEWAY_SECRET: ${KONG_GATEWAY_SECRET}
+    expose:
+      - "3001"
     depends_on:
+      keycloak-provisioner:
+        condition: service_completed_successfully
+      broker-integration-api:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
+
+  broker-integration-api:
+    build:
+      context: .
+      dockerfile: broker-integration-api/Dockerfile
+    container_name: trading_journal_broker_integration_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      PORT: 4000
+      BROKER_INTEGRATION_CLIENT_SECRET: ${BROKER_INTEGRATION_CLIENT_SECRET}
+      META_API_ACCESS_TOKEN: ${META_API_ACCESS_TOKEN:-}
+      META_API_REGION: ${META_API_REGION:-london}
+      CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY:-}
+      HOST: 0.0.0.0
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      KEYCLOAK_URL: http://keycloak:8080/auth
+      KEYCLOAK_ISSUER_URL: http://localhost:8000/auth
+      KEYCLOAK_REALM: trading-journal
+    expose:
+      - "4000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      keycloak-provisioner:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
   frontend:
     build:
@@ -130,7 +194,7 @@ services:
       KEYCLOAK_REALM: trading-journal
       KEYCLOAK_CLIENT_ID: trading-journal-frontend
     depends_on:
-      - backend
+      - trade-api
 
   kong:
     image: kong:3.6
@@ -156,7 +220,8 @@ services:
       - "8443:8443"
     depends_on:
       - frontend
-      - backend
+      - trade-api
+      - broker-integration-api
       - keycloak
       - minio
 

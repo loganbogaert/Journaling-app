@@ -1,0 +1,40 @@
+<div class="page form-page">
+  <header class="page-header">
+    <h1>Generated chart settings</h1>
+    <a routerLink="/dashboard" class="btn-secondary">Back to dashboard</a>
+  </header>
+
+  <p *ngIf="loading">Loading…</p>
+  <form *ngIf="!loading" #settingsForm="ngForm" (ngSubmit)="settingsForm.valid && save()">
+    <fieldset class="field">
+      <legend>Timeframes</legend>
+      <label *ngFor="let timeframe of availableTimeframes">
+        <input
+          type="checkbox"
+          [checked]="settings.timeframes.includes(timeframe)"
+          (change)="toggleTimeframe(timeframe, $event)" />
+        {{ timeframe }}
+      </label>
+    </fieldset>
+
+    <div class="field">
+      <label for="candleCount">Candles per chart</label>
+      <input
+        id="candleCount"
+        type="number"
+        name="candleCount"
+        [(ngModel)]="settings.candleCount"
+        min="50"
+        max="500"
+        step="1"
+        required
+        (ngModelChange)="saved = false" />
+    </div>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+    <p *ngIf="saved">Settings saved.</p>
+    <button type="submit" [disabled]="saving || settingsForm.invalid || settings.timeframes.length === 0">
+      {{ saving ? 'Saving…' : 'Save settings' }}
+    </button>
+  </form>
+</div>

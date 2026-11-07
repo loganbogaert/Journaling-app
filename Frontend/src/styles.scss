@@ -434,9 +434,9 @@ button[type='submit'] {
   }
 }
 
-// ── Session Grid ──────────────────────────────────────────────────────────────
+// ── Account Grid ──────────────────────────────────────────────────────────────
 
-.session-grid {
+.account-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
   gap: 1rem;
@@ -450,9 +450,9 @@ button[type='submit'] {
   }
 }
 
-// ── Session Card ──────────────────────────────────────────────────────────────
+// ── Account Card ──────────────────────────────────────────────────────────────
 
-.session-card {
+.account-card {
   display: block;
   background: var(--bg-card);
   border: 1px solid var(--border);
